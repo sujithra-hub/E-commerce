@@ -30,7 +30,7 @@ const UserRegister = () => {
       alert("User Registered Successfully!");
 
       // redirect after success
-      navigate("/login");
+      navigate("/user/UserLogin");
 
     } catch (error) {
       console.log("Error:", error.response?.data || error.message);

@@ -3,7 +3,7 @@ import {
   getCartItems,
   updateCartQty,
   removeCartItem
-} from "../services/cartService"; // ✅ FIXED IMPORT
+} from "../services/cartService";
 
 import "./Cart.css";
 import noImage from "../assets/no-image.png";
@@ -24,7 +24,7 @@ function Cart() {
     } else {
       console.error("User not logged in");
     }
-  }, [token]); // ✅ small improvement
+  }, [token]);
 
   /* ✅ LOAD CART */
   const loadCart = async () => {
@@ -108,12 +108,7 @@ function Cart() {
   return (
     <div className="cart-container">
       <h2 className="cart-title">🛒 Your Cart</h2>
-      <button
-               className="history-btn"
-               onClick={() => navigate("/Orders")}
-               >
-                📦 Order History
-              </button>
+
       {loading ? (
         <p className="empty-cart">Loading cart...</p>
       ) : !token ? (
@@ -163,16 +158,26 @@ function Cart() {
             );
           })}
 
-          {/* TOTAL */}
+          {/* TOTAL SECTION */}
           <div className="cart-total">
             <h2>Total: ₹{getTotal()}</h2>
 
-            <button
-              className="checkout-btn"
-              onClick={() => navigate("/checkout")}
-            >
-              Proceed to Checkout
-            </button>
+            <div className="cart-buttons">
+              <button
+                className="checkout-btn"
+                onClick={() => navigate("/checkout")}
+              >
+                Proceed to Checkout
+              </button>
+
+              {/* ORDER HISTORY BUTTON */}
+              <button
+                className="history-btn"
+                onClick={() => navigate("/order-history")}
+              >
+                📦 Order History
+              </button>
+            </div>
           </div>
         </>
       )}
