@@ -1,0 +1,204 @@
+import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { logout } from "../utils/auth";
+import logo from "../assets/shopmart-logo.png";
+
+const Navbar = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const hideNavbarRoutes = [
+    "/",
+    "/user/Userlogin",
+    "/user/register",
+    "/admin/Adminlogin",
+    "/admin/register",
+    "/register",
+  ];
+
+  if (!token || hideNavbarRoutes.includes(location.pathname)) {
+    return null;
+  }
+
+  return (
+    <div style={styles.wrapper}>
+
+      <div style={styles.topRow}>
+        <div style={styles.leftSection} onClick={() => navigate("/")}>
+          <img src={logo} alt="ShopMart Logo" style={styles.logoImg} />
+        </div>
+
+        <div style={styles.centerSection}>
+          SHOPMART
+        </div>
+
+        <div style={styles.rightSection}>
+          <div style={styles.profileCircle}>👤</div>
+
+          <button
+            style={styles.iconBtn}
+            onClick={() => navigate("/wishlist")}
+          >
+            ❤️
+          </button>
+
+          <button
+            style={styles.iconBtn}
+            onClick={() => navigate("/cart")}
+          >
+            🛒
+          </button>
+
+          <button onClick={handleLogout} style={styles.logoutBtn}>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div style={styles.searchRow}>
+        <input
+          type="text"
+          placeholder="Search for products, brands..."
+          style={styles.search}
+        />
+      </div>
+
+      <div style={styles.bottomBar}>
+        <button style={styles.navBtn} onClick={() => navigate("/Home")}>Home</button>
+        <button style={styles.navBtn} onClick={() => navigate("/categories")}>Categories</button>
+        <button style={styles.navBtn} onClick={() => navigate("/wishlist")}>Wishlist</button>
+        <button style={styles.navBtn} onClick={() => navigate("/cart")}>Cart</button>
+      </div>
+    </div>
+  );
+};
+
+export default Navbar;
+/* ================= STYLES ================= */
+
+const styles = {
+  wrapper: {
+    background: "#0f172a",
+    color: "white",
+  },
+
+  topRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "10px 20px",
+  },
+
+  leftSection: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "flex-start",
+    alignItems: "center",
+  },
+
+  centerSection: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontSize: "32px",
+    fontWeight: "bold",
+    letterSpacing: "2px",
+    color: "#ff9900",
+  },
+
+  rightSection: {
+    flex: 1,
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: "10px",
+  },
+
+  logoImg: {
+    height: "70px",
+    width: "70px",
+    objectFit: "contain",
+    cursor: "pointer",
+  },
+
+  profileCircle: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    background: "#2c2f36",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px",
+  },
+
+  iconBtn: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    border: "none",
+    background: "#2c2f36",
+    color: "white",
+    cursor: "pointer",
+  },
+
+  logoutBtn: {
+    padding: "8px 14px",
+    background: "#ff4d4f",
+    border: "none",
+    borderRadius: "6px",
+    color: "white",
+    cursor: "pointer",
+  },
+
+  searchRow: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "10px 20px",
+  },
+
+  search: {
+    width: "60%",
+    padding: "12px 15px",
+    borderRadius: "10px",
+    border: "none",
+    outline: "none",
+    fontSize: "14px",
+  },
+
+  bottomBar: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "40px",
+    padding: "12px",
+    background: "#111827",
+    borderTop: "1px solid rgba(255,255,255,0.1)",
+  },
+
+  navBtn: {
+    background: "transparent",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "15px",
+  },
+
+  badge: {
+    position: "absolute",
+    top: "-6px",
+    right: "-6px",
+    background: "red",
+    fontSize: "10px",
+    padding: "3px 6px",
+    borderRadius: "50%",
+  },
+};
