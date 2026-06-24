@@ -7,6 +7,7 @@ import {
 } from "../services/wishlistService";
 
 import { getProducts } from "../services/productService";
+import { addToCart } from "../services/cartService";
 
 const BASE_URL = "http://localhost:8080";
 
@@ -25,6 +26,8 @@ const getImage = (img) => {
 function WishlistPage() {
   const [wishlist, setWishlist] = useState([]);
   const [products, setProducts] = useState([]);
+  const [toast, setToast] = useState(null); // ✅ NEW
+
   const navigate = useNavigate();
 
   /* LOAD WISHLIST */
@@ -57,7 +60,7 @@ function WishlistPage() {
     return products.find((p) => p.id === productId);
   };
 
-  /* REMOVE */
+  /* REMOVE FROM WISHLIST */
   const removeItem = async (productId) => {
     try {
       await removeWishlistAPI(productId);
@@ -67,6 +70,24 @@ function WishlistPage() {
       );
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  /* ✅ ADD TO CART WITH POPUP */
+  const handleAddToCart = async (productId) => {
+    try {
+      await addToCart(productId, 1);
+
+      const product = getProduct(productId);
+
+      // ✅ SHOW POPUP
+      setToast(`${product?.name || "Product"} added to cart 🛒`);
+
+      setTimeout(() => setToast(null), 2000);
+
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to add to cart");
     }
   };
 
@@ -88,7 +109,7 @@ function WishlistPage() {
 
             return (
               <div key={item.id} style={styles.card}>
-
+                
                 {/* IMAGE */}
                 <div style={styles.imgBox}>
                   {getImage(product?.imageUrl) ? (
@@ -112,24 +133,38 @@ function WishlistPage() {
                     ₹{product?.price || 0}
                   </p>
 
-                  <button
-                    style={styles.removeBtn}
-                    onClick={() => removeItem(item.productId)}
-                  >
-                    ❌ Remove
-                  </button>
-                </div>
+                  {/* BUTTONS */}
+                  <div style={styles.btnRow}>
+                    <button
+                      style={styles.cartBtn}
+                      onClick={() => handleAddToCart(item.productId)}
+                    >
+                      🛒 Add to Cart
+                    </button>
 
+                    <button
+                      style={styles.removeBtn}
+                      onClick={() => removeItem(item.productId)}
+                    >
+                      ❌ Remove
+                    </button>
+                  </div>
+                </div>
               </div>
             );
           })}
         </div>
       )}
+
+      {/* ✅ TOAST POPUP */}
+      {toast && <div style={styles.toast}>{toast}</div>}
     </div>
   );
 }
 
 export default WishlistPage;
+
+/* 🎨 STYLES */
 const styles = {
   container: {
     padding: "20px",
@@ -183,10 +218,25 @@ const styles = {
     fontWeight: "bold",
   },
 
-  removeBtn: {
+  btnRow: {
+    display: "flex",
+    gap: "10px",
     marginTop: "10px",
+  },
+
+  cartBtn: {
+    flex: 1,
     padding: "8px",
-    width: "100%",
+    background: "#28a745",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+  },
+
+  removeBtn: {
+    flex: 1,
+    padding: "8px",
     background: "#ff4d4d",
     color: "#fff",
     border: "none",
@@ -197,5 +247,18 @@ const styles = {
   empty: {
     textAlign: "center",
     marginTop: "80px",
+  },
+
+  /* ✅ TOAST */
+  toast: {
+    position: "fixed",
+    top: "20px",
+    right: "20px",
+    background: "#333",
+    color: "#fff",
+    padding: "12px 18px",
+    borderRadius: "8px",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+    zIndex: 1000,
   },
 };
