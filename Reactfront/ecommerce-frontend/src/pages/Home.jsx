@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import ProductReviews from "../components/ProductReviews";
 
 const BASE_URL = "http://localhost:8080";
@@ -7,9 +8,19 @@ const BASE_URL = "http://localhost:8080";
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [toast, setToast] = useState(null); // ✅ NEW
+  const [toast, setToast] = useState(null);
 
+  const location = useLocation();
   const token = localStorage.getItem("token");
+
+  // ✅ SEARCH QUERY (INSIDE COMPONENT)
+  const query = new URLSearchParams(location.search);
+  const searchQuery = query.get("search") || "";
+
+  // ✅ FILTER PRODUCTS
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     fetchProducts();
@@ -26,7 +37,7 @@ const Home = () => {
     }
   };
 
-  /* ✅ ADD TO CART WITH POPUP */
+  /* ✅ ADD TO CART */
   const handleAddToCart = async (id) => {
     try {
       await axios.post(
@@ -36,8 +47,6 @@ const Home = () => {
       );
 
       const product = products.find((p) => p.id === id);
-
-      // ✅ SHOW POPUP
       setToast(`${product?.name || "Product"} added to cart 🛒`);
 
       setTimeout(() => setToast(null), 2000);
@@ -46,7 +55,7 @@ const Home = () => {
     }
   };
 
-  /* SAFE IMAGE */
+  /* ✅ SAFE IMAGE */
   const getImage = (p) => {
     const img = p.image || p.imageUrl || p.img || p.imagePath;
 
@@ -64,11 +73,15 @@ const Home = () => {
         <p>Up to 70% OFF on Electronics & Fashion</p>
       </div>
 
-      {/* FEATURED */}
-      <h2 style={styles.sectionTitle}>⭐ Featured Products</h2>
+      {/* ✅ TITLE CHANGES BASED ON SEARCH */}
+      <h2 style={styles.sectionTitle}>
+        {searchQuery
+          ? `🔍 Results for "${searchQuery}"`
+          : "⭐ Featured Products"}
+      </h2>
 
       <div style={styles.grid}>
-        {products.slice(0, 4).map((p) => (
+        {(searchQuery ? filteredProducts : products.slice(0, 4)).map((p) => (
           <div key={p.id} style={styles.card}>
             <img src={getImage(p)} alt={p.name} style={styles.image} />
 
@@ -92,44 +105,49 @@ const Home = () => {
         ))}
       </div>
 
-      {/* BEST SELLERS */}
-      <h2 style={styles.sectionTitle}>🔥 Best Sellers</h2>
+      {/* ❌ NO RESULTS MESSAGE */}
+      {searchQuery && filteredProducts.length === 0 && (
+        <p style={{ textAlign: "center", marginTop: "20px" }}>
+          ❌ No products found
+        </p>
+      )}
 
-      <div style={styles.grid}>
-        {products.slice(4, 8).map((p) => (
-          <div key={p.id} style={styles.card}>
-            <img src={getImage(p)} alt={p.name} style={styles.image} />
+      {/* BEST SELLERS ONLY WHEN NO SEARCH */}
+      {!searchQuery && (
+        <>
+          <h2 style={styles.sectionTitle}>🔥 Best Sellers</h2>
 
-            <h3>{p.name}</h3>
-            <p>₹ {p.price}</p>
+          <div style={styles.grid}>
+            {products.slice(4, 8).map((p) => (
+              <div key={p.id} style={styles.card}>
+                <img src={getImage(p)} alt={p.name} style={styles.image} />
 
-            <button
-              style={styles.viewBtn}
-              onClick={() => setSelectedProduct(p)}
-            >
-              View
-            </button>
+                <h3>{p.name}</h3>
+                <p>₹ {p.price}</p>
 
-            <button
-              style={styles.cartBtn}
-              onClick={() => handleAddToCart(p.id)}
-            >
-              Add to Cart
-            </button>
+                <button
+                  style={styles.viewBtn}
+                  onClick={() => setSelectedProduct(p)}
+                >
+                  View
+                </button>
+
+                <button
+                  style={styles.cartBtn}
+                  onClick={() => handleAddToCart(p.id)}
+                >
+                  Add to Cart
+                </button>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
 
       {/* MODAL */}
       {selectedProduct && (
-        <div
-          style={styles.overlay}
-          onClick={() => setSelectedProduct(null)}
-        >
-          <div
-            style={styles.modal}
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div style={styles.overlay} onClick={() => setSelectedProduct(null)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
             <button
               style={styles.closeBtn}
               onClick={() => setSelectedProduct(null)}
@@ -146,21 +164,15 @@ const Home = () => {
 
               <div style={styles.modalRight}>
                 <h2>{selectedProduct.name}</h2>
-
-                <p style={styles.price}>
-                  ₹{selectedProduct.price}
-                </p>
+                <p style={styles.price}>₹{selectedProduct.price}</p>
 
                 <p style={styles.desc}>
-                  {selectedProduct.description ||
-                    "No description available"}
+                  {selectedProduct.description || "No description available"}
                 </p>
 
                 <button
                   style={styles.cartBtn}
-                  onClick={() =>
-                    handleAddToCart(selectedProduct.id)
-                  }
+                  onClick={() => handleAddToCart(selectedProduct.id)}
                 >
                   🛒 Add to Cart
                 </button>
@@ -174,12 +186,12 @@ const Home = () => {
         </div>
       )}
 
-      {/* ✅ TOAST POPUP */}
+      {/* TOAST */}
       {toast && <div style={styles.toast}>{toast}</div>}
     </div>
   );
 };
-
+export default Home;
 /* 🎨 STYLES */
 const styles = {
   hero: {
@@ -312,4 +324,3 @@ const styles = {
   },
 };
 
-export default Home;
