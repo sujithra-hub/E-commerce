@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useState } from "react";
 import { logout } from "../utils/auth";
 import logo from "../assets/shopmart-logo.png";
 
@@ -7,12 +7,22 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const userId = localStorage.getItem("userId");
+  const [search, setSearch] = useState(""); // ✅ SEARCH STATE
+
   const token = localStorage.getItem("token");
 
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  // ✅ HANDLE SEARCH SUBMIT
+  const handleSearch = (e) => {
+    if (e.key === "Enter") {
+      if (search.trim() !== "") {
+        navigate(`/Home?search=${search}`); // ✅ PASS QUERY
+      }
+    }
   };
 
   const hideNavbarRoutes = [
@@ -30,30 +40,21 @@ const Navbar = () => {
 
   return (
     <div style={styles.wrapper}>
-
       <div style={styles.topRow}>
-        <div style={styles.leftSection} onClick={() => navigate("/")}>
+        <div style={styles.leftSection} onClick={() => navigate("/Home")}>
           <img src={logo} alt="ShopMart Logo" style={styles.logoImg} />
         </div>
 
-        <div style={styles.centerSection}>
-          SHOPMART
-        </div>
+        <div style={styles.centerSection}>SHOPMART</div>
 
         <div style={styles.rightSection}>
           <div style={styles.profileCircle}>👤</div>
 
-          <button
-            style={styles.iconBtn}
-            onClick={() => navigate("/wishlist")}
-          >
+          <button style={styles.iconBtn} onClick={() => navigate("/wishlist")}>
             ❤️
           </button>
 
-          <button
-            style={styles.iconBtn}
-            onClick={() => navigate("/cart")}
-          >
+          <button style={styles.iconBtn} onClick={() => navigate("/cart")}>
             🛒
           </button>
 
@@ -63,25 +64,38 @@ const Navbar = () => {
         </div>
       </div>
 
+      {/* ✅ SEARCH BAR */}
       <div style={styles.searchRow}>
         <input
           type="text"
           placeholder="Search for products, brands..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleSearch} // ✅ ENTER KEY SEARCH
           style={styles.search}
         />
       </div>
 
       <div style={styles.bottomBar}>
-        <button style={styles.navBtn} onClick={() => navigate("/Home")}>Home</button>
-        <button style={styles.navBtn} onClick={() => navigate("/categories")}>Categories</button>
-        <button style={styles.navBtn} onClick={() => navigate("/wishlist")}>Wishlist</button>
-        <button style={styles.navBtn} onClick={() => navigate("/cart")}>Cart</button>
+        <button style={styles.navBtn} onClick={() => navigate("/Home")}>
+          Home
+        </button>
+        <button style={styles.navBtn} onClick={() => navigate("/categories")}>
+          Categories
+        </button>
+        <button style={styles.navBtn} onClick={() => navigate("/wishlist")}>
+          Wishlist
+        </button>
+        <button style={styles.navBtn} onClick={() => navigate("/cart")}>
+          Cart
+        </button>
       </div>
     </div>
   );
 };
 
 export default Navbar;
+
 /* ================= STYLES ================= */
 
 const styles = {
@@ -190,15 +204,5 @@ const styles = {
     border: "none",
     cursor: "pointer",
     fontSize: "15px",
-  },
-
-  badge: {
-    position: "absolute",
-    top: "-6px",
-    right: "-6px",
-    background: "red",
-    fontSize: "10px",
-    padding: "3px 6px",
-    borderRadius: "50%",
   },
 };
