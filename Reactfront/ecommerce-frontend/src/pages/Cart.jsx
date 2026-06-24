@@ -173,7 +173,7 @@ function Cart() {
               {/* ORDER HISTORY BUTTON */}
               <button
                 className="history-btn"
-                onClick={() => navigate("/order-history")}
+                onClick={() => navigate("/orders")}
               >
                 📦 Order History
               </button>

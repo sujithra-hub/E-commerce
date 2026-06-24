@@ -30,7 +30,7 @@ const AdminRegister = () => {
       alert("Admin Registered Successfully!");
 
       // redirect after success
-      navigate("/admin/login");
+      navigate("/admin/Adminlogin");
 
     } catch (error) {
       console.log("Error:", error.response?.data || error.message);

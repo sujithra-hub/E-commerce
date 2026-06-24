@@ -27,7 +27,7 @@ const UserLogin = () => {
       console.log("LOGIN RESPONSE:", res.data);
 
       // -------------------------------
-      // GET TOKEN (supports both formats)
+      // GET TOKEN
       // -------------------------------
       const token = res.data?.token || res.data;
 
@@ -45,16 +45,16 @@ const UserLogin = () => {
 
       try {
         payload = JSON.parse(atob(token.split(".")[1]));
-        console.log("JWT PAYLOAD:", payload);
 
-        role = payload.role || null;
+        role = payload.role || "user"; // ✅ default user
         userId = payload.userId || payload.id || null;
       } catch (err) {
         console.log("JWT decode failed:", err);
+        role = "user"; // fallback safety
       }
 
       // -------------------------------
-      // OPTIONAL ROLE CHECK (safe)
+      // FORCE USER LOGIN ONLY
       // -------------------------------
       if (role && role.toLowerCase() !== "user") {
         alert("Access denied: Only users allowed here");
@@ -65,8 +65,8 @@ const UserLogin = () => {
       // STORE DATA
       // -------------------------------
       localStorage.setItem("token", token);
+      localStorage.setItem("role", "user"); // ✅ IMPORTANT FIX
 
-      if (role) localStorage.setItem("role", role);
       if (userId) localStorage.setItem("userId", userId);
 
       alert("User login successful");

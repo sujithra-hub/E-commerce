@@ -7,34 +7,43 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [search, setSearch] = useState(""); // ✅ SEARCH STATE
+  const [search, setSearch] = useState("");
 
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role"); // ✅ ADDED ROLE CHECK
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  // ✅ HANDLE SEARCH SUBMIT
   const handleSearch = (e) => {
     if (e.key === "Enter") {
       if (search.trim() !== "") {
-        navigate(`/Home?search=${search}`); // ✅ PASS QUERY
+        navigate(`/Home?search=${search}`);
       }
     }
   };
 
-  const hideNavbarRoutes = [
+  // ❌ Hide navbar conditions
+  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isAuthRoute = [
     "/",
     "/user/Userlogin",
     "/user/register",
     "/admin/Adminlogin",
     "/admin/register",
     "/register",
-  ];
+  ].includes(location.pathname);
 
-  if (!token || hideNavbarRoutes.includes(location.pathname)) {
+  // ✅ FINAL RULE:
+  // show navbar ONLY if:
+  // - token exists
+  // - role is user
+  // - not admin route
+  // - not auth page
+
+  if (!token || role !== "user" || isAdminRoute || isAuthRoute) {
     return null;
   }
 
@@ -64,14 +73,14 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* ✅ SEARCH BAR */}
+      {/* SEARCH BAR */}
       <div style={styles.searchRow}>
         <input
           type="text"
           placeholder="Search for products, brands..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={handleSearch} // ✅ ENTER KEY SEARCH
+          onKeyDown={handleSearch}
           style={styles.search}
         />
       </div>

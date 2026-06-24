@@ -19,6 +19,12 @@ import OrderDetails from "./pages/OrderDetails";
 /* ADMIN */
 import AdminRegister from "./pages/admin/AdminRegister";
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./components/AdminLayout";
+
+
+//import CategoryPage from "./pages/CategoryPage";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 /* ROUTES */
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -139,6 +145,16 @@ function App() {
         {/* ================= ADMIN ================= */}
         <Route path="/admin/Adminlogin" element={<AdminLogin />} />
         <Route path="/admin/register" element={<AdminRegister />} />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminDashboard />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
       </Routes>
     </>
   );
