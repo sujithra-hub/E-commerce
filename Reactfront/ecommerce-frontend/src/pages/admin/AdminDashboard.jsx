@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -9,6 +10,8 @@ const AdminDashboard = () => {
 
   const adminId = localStorage.getItem("adminId");
   const token = localStorage.getItem("token");
+
+  const navigate = useNavigate();
 
   const authHeader = {
     headers: { Authorization: `Bearer ${token}` },
@@ -24,7 +27,7 @@ const AdminDashboard = () => {
 
       setProducts(res.data);
 
-      // ✅ UNIQUE CATEGORY COUNT
+      // ✅ METHOD 1: Count from products
       const uniqueCategories = new Set(
         res.data.map((p) => p.category)
       );
@@ -61,15 +64,42 @@ const AdminDashboard = () => {
     }
   };
 
+  // ---------------- OPTIONAL: FETCH CATEGORY COUNT FROM BACKEND ----------------
+  const fetchCategoryCount = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:8080/api/admin/categories/${adminId}`,
+        authHeader
+      );
+      setCategoryCount(res.data.length);
+    } catch (err) {
+      console.log("Category error:", err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
     fetchOrders();
     fetchRevenue();
+
+    // 🔥 Uncomment if you have category API
+    // fetchCategoryCount();
+
   }, []);
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Admin Dashboard</h1>
+
+      {/* ✅ CATEGORY MANAGEMENT BUTTON */}
+      <div style={styles.topBar}>
+        <button
+          onClick={() => navigate("/admin/categories")}
+          style={styles.categoryBtn}
+        >
+          Manage Categories
+        </button>
+      </div>
 
       {/* ================= STATS ================= */}
       <div style={styles.grid}>
@@ -159,10 +189,24 @@ const styles = {
 
   title: {
     textAlign: "center",
-    marginBottom: "30px",
+    marginBottom: "20px",
   },
 
-  // ✅ NEW GRID LAYOUT
+  topBar: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: "20px",
+  },
+
+  categoryBtn: {
+    padding: "10px 20px",
+    background: "#007bff",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+  },
+
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -176,7 +220,6 @@ const styles = {
     borderRadius: "12px",
     textAlign: "center",
     boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-    transition: "0.3s",
   },
 
   sectionTitle: {

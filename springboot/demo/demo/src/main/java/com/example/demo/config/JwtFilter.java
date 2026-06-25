@@ -66,6 +66,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
             UserDetails userDetails =
                     userDetailsService.loadUserByUsername(email);
+            System.out.println("ROLE FROM DB: " + userDetails.getAuthorities());
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(

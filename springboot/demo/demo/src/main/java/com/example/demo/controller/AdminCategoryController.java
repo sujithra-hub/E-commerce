@@ -8,55 +8,50 @@ import com.example.demo.model.Category;
 import com.example.demo.service.CategoryService;
 
 @RestController
-@RequestMapping("/api/categories")
-public class CategoryController {
+@RequestMapping("/api/admin/categories")
+public class AdminCategoryController {
 
     private final CategoryService categoryService;
 
-    public CategoryController(CategoryService categoryService) {
+    public AdminCategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
 
-    // =========================
-    // ✅ EXISTING USER FEATURES (UNCHANGED)
-    // =========================
-
-    // ADD CATEGORY (USER)
+    // ================= ADD CATEGORY (ADMIN)
     @PostMapping
     public Category addCategory(@RequestBody Category category) {
-        return categoryService.addCategory(category);
+        return categoryService.addCategoryWithValidation(category);
     }
 
-    // GET ALL
+    // ================= GET ALL CATEGORIES (ADMIN)
     @GetMapping
-    public List<Category> getAll() {
+    public List<Category> getAllCategories() {
         return categoryService.getAllCategories();
     }
 
-    // DELETE
+    // ================= UPDATE CATEGORY (ADMIN)
+    @PutMapping("/{id}")
+    public Category updateCategory(@PathVariable Long id,
+                                   @RequestBody Category category) {
+        category.setId(id);
+        return categoryService.addCategory(category); 
+        // or use a proper update method if you have one
+    }
+
+    // ================= DELETE CATEGORY (ADMIN)
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public String deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return "Deleted successfully";
     }
 
-    // =========================
-    // ✅ NEW ADMIN FEATURES
-    // =========================
-
-    // ✅ ADMIN ADD CATEGORY (with duplicate check)
-    @PostMapping("/admin")
-    public Category addCategoryByAdmin(@RequestBody Category category) {
-        return categoryService.addCategoryWithValidation(category);
-    }
-
-    // ✅ GET TOTAL CATEGORY COUNT (Admin Dashboard)
+    // ================= COUNT (ADMIN DASHBOARD)
     @GetMapping("/count")
     public long getTotalCategories() {
         return categoryService.getTotalCategories();
     }
 
-    // ✅ OPTIONAL: GET categories by admin
+    // ================= OPTIONAL: BY ADMIN
     @GetMapping("/admin/{adminId}")
     public List<Category> getCategoriesByAdmin(@PathVariable Long adminId) {
         return categoryService.getCategoriesByAdmin(adminId);

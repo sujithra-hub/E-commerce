@@ -82,9 +82,10 @@ public class SecurityConfig {
     .requestMatchers("/api/reviews/**").permitAll()
 
     // ADMIN ONLY
+    .requestMatchers("/api/admin/**").hasRole("ADMIN")
     .requestMatchers("/api/orders/all").hasRole("ADMIN")
     .requestMatchers("/api/orders/status/**").hasRole("ADMIN")
-    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+    
 
     // IMPORTANT: specific order access handled in controller
     .requestMatchers("/api/orders/track/**").hasAnyRole("USER","ADMIN")

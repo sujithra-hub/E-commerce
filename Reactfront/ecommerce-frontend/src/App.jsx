@@ -21,6 +21,7 @@ import AdminRegister from "./pages/admin/AdminRegister";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./components/AdminLayout";
+import AdminCategories from "./pages/admin/AdminCategories";
 
 
 //import CategoryPage from "./pages/CategoryPage";
@@ -155,6 +156,7 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route path="/admin/categories" element={<AdminCategories />} />
       </Routes>
     </>
   );
