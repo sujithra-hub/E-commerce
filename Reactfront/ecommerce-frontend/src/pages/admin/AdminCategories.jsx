@@ -362,7 +362,7 @@ const styles = {
     padding: "5px",
     color: "white",
   },
-   backBtn: {
+  backBtn: {
   marginTop: "10px",
   background: "#1f2937",
   color: "white",
@@ -376,6 +376,6 @@ const styles = {
   justifyContent: "flex-start", // 🔥 forces left alignment
   alignItems: "center",
   gap: "8px",
-  fontSize:"15px",
+  fontSize:"16px",
 },
 };
