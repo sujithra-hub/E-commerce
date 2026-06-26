@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const AdminOrders = () => {
   const [view, setView] = useState("dashboard");
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [popup, setPopup] = useState("");
 
   const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
+  const decoded = token ? jwtDecode(token) : null;
+  const userId = decoded?.userId;
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${token}` },
@@ -25,22 +29,14 @@ const AdminOrders = () => {
     }
   };
 
-  // ================= FILTER (ONLY MY PRODUCTS ORDERS) =================
-  const myOrders = orders.filter((order) =>
-    order.items?.some(
-      (item) => String(item.adminId) === String(userId)
-    )
-  );
-
-  // ================= STATUS UPDATE =================
-  const updateStatus = async (orderId, status) => {
+  // ================= FETCH PRODUCTS =================
+  const fetchProducts = async () => {
     try {
-      await axios.put(
-        `http://localhost:8080/api/admin/orders/${orderId}/status`,
-        { status },
+      const res = await axios.get(
+        "http://localhost:8080/api/admin/products",
         getAuthHeaders()
       );
-      fetchOrders();
+      setProducts(res.data);
     } catch (err) {
       console.log(err);
     }
@@ -48,11 +44,74 @@ const AdminOrders = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchProducts();
   }, []);
 
+  // ================= MY PRODUCT IDS =================
+  const myProductIds = useMemo(() => {
+    if (!products?.length || !userId) return [];
+
+    return products
+      .filter((p) => {
+        const ownerId =
+          typeof p.createdBy === "object"
+            ? p.createdBy?.id
+            : p.createdBy;
+
+        return String(ownerId) === String(userId);
+      })
+      .map((p) => String(p.id));
+  }, [products, userId]);
+
+  // ================= MY ORDERS =================
+  const myOrders = useMemo(() => {
+    if (!orders?.length) return [];
+
+    return orders.filter((order) => {
+      if (!order) return false;
+
+      if (order.productIds?.length) {
+        return order.productIds.some((pid) =>
+          myProductIds.includes(String(pid))
+        );
+      }
+
+      if (order.items?.length) {
+        return order.items.some((item) =>
+          myProductIds.includes(
+            String(item.productId || item.product?.id || item.id)
+          )
+        );
+      }
+
+      if (order.orderItems?.length) {
+        return order.orderItems.some((item) =>
+          myProductIds.includes(
+            String(item.productId || item.product?.id)
+          )
+        );
+      }
+
+      return false;
+    });
+  }, [orders, myProductIds]);
+
+  // ================= STATUS UPDATE =================
+ const updateStatus = async (orderId, status) => {
+  try {
+    await axios.put(
+      `http://localhost:8080/api/orders/status/${orderId}?status=${status}`,
+      {},
+      getAuthHeaders()
+    );
+
+    fetchOrders(); // refresh after update
+  } catch (err) {
+    console.error(err);
+  }
+};
   // ================= STATS =================
   const totalOrders = myOrders.length;
-
   const confirmed = myOrders.filter((o) => o.status === "CONFIRMED").length;
   const shipped = myOrders.filter((o) => o.status === "SHIPPED").length;
   const outForDelivery = myOrders.filter(
@@ -62,9 +121,10 @@ const AdminOrders = () => {
 
   return (
     <div style={styles.wrapper}>
-      {/* ================= SIDEBAR ================= */}
+      {popup && <div style={styles.popup}>{popup}</div>}
+
       <div style={styles.sidebar}>
-        <h2 style={styles.logo}>📦 Admin Orders</h2>
+        <h2>📦 Admin Orders</h2>
 
         <div
           style={view === "dashboard" ? styles.activeItem : styles.item}
@@ -79,120 +139,130 @@ const AdminOrders = () => {
         >
           📋 Orders
         </div>
-
-        <button style={styles.backBtn} onClick={() => setView("dashboard")}>
-          ⬅ Back
-        </button>
       </div>
 
-      {/* ================= MAIN ================= */}
       <div style={styles.main}>
-        <h1 style={styles.title}>Orders Management</h1>
+        <h1>Orders Management</h1>
 
-        {/* ================= DASHBOARD ================= */}
+        <h3 style={{ color: "yellow" }}>
+          My Product IDs Count: {myProductIds.length}
+        </h3>
+
         {view === "dashboard" && (
           <div style={styles.cardGrid}>
-            <div style={styles.cardBlue}>
-              <h2>{totalOrders}</h2>
-              <p>Total Orders</p>
-            </div>
-
-            <div style={styles.cardYellow}>
-              <h2>{confirmed}</h2>
-              <p>Confirmed</p>
-            </div>
-
-            <div style={styles.cardPurple}>
-              <h2>{shipped}</h2>
-              <p>Shipped</p>
-            </div>
-
-            <div style={styles.cardOrange}>
-              <h2>{outForDelivery}</h2>
-              <p>Out for Delivery</p>
-            </div>
-
-            <div style={styles.cardGreen}>
-              <h2>{delivered}</h2>
-              <p>Delivered</p>
-            </div>
+            <div style={styles.cardBlue}><h2>{totalOrders}</h2><p>Total Orders</p></div>
+            <div style={styles.cardYellow}><h2>{confirmed}</h2><p>Confirmed</p></div>
+            <div style={styles.cardPurple}><h2>{shipped}</h2><p>Shipped</p></div>
+            <div style={styles.cardOrange}><h2>{outForDelivery}</h2><p>Out for Delivery</p></div>
+            <div style={styles.cardGreen}><h2>{delivered}</h2><p>Delivered</p></div>
           </div>
         )}
 
-        {/* ================= ORDERS LIST ================= */}
         {view === "orders" && (
-          <div>
+          <>
             <h2>🧾 My Orders</h2>
 
             <table style={styles.table}>
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th style={styles.th}>Order ID</th>
+                  <th style={styles.th}>Name</th>
+                  <th style={styles.th}>Phone</th>
+                  <th style={styles.th}>Address</th>
+                  <th style={styles.th}>City</th>
+                  <th style={styles.th}>Pincode</th>
+                  <th style={styles.th}>Payment Method</th>
+                  <th style={styles.th}>Payment Status</th>
+                  <th style={styles.th}>Total</th>
+                  <th style={styles.th}>Status</th>
+                  <th style={styles.th}>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {myOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>{order.id}</td>
-                    <td>{order.userName}</td>
-                    <td>₹{order.totalAmount}</td>
-                    <td>
-                      <span style={styles.status}>
-                        {order.status}
-                      </span>
-                    </td>
+                {myOrders.map((order) => {
+                  const status =
+                    order.status === "ORDER_PLACED"
+                      ? "PENDING"
+                      : order.status;
 
-                    <td>
-                      {/* CONFIRM */}
-                      <button
-                        style={styles.confirmBtn}
-                        onClick={() =>
-                          updateStatus(order.id, "CONFIRMED")
-                        }
-                      >
-                        Confirm
-                      </button>
+                  return (
+                   <tr key={order.id}>
+                   <td style={styles.td}>{order.id}</td>
 
-                      {/* SHIPPED */}
-                      <button
-                        style={styles.shipBtn}
-                        onClick={() =>
-                          updateStatus(order.id, "SHIPPED")
-                        }
-                      >
-                        Ship
-                      </button>
+                   {/* NAME (fallback to userName if needed) */}
+                  <td style={styles.td}>{order.name || order.userName}</td>
 
-                      {/* OUT FOR DELIVERY */}
-                      <button
+                  {/* PHONE */}
+                  <td style={styles.td}>{order.phone}</td>
+
+                  {/* ADDRESS */}
+                  <td style={styles.td}>{order.address}</td>
+
+                  {/* CITY */}
+                  <td style={styles.td}>{order.city}</td>
+
+                  {/* PINCODE */}
+                  <td style={styles.td}>{order.pincode}</td>
+
+                  {/* PAYMENT METHOD */}
+                  <td style={styles.td}>{order.paymentMethod}</td>
+
+                  {/* PAYMENT STATUS */}
+                  <td style={styles.td}>{order.paymentStatus}</td>
+
+                  {/* TOTAL */}
+                  <td style={styles.td}>₹{order.totalAmount}</td>
+
+                  {/* STATUS */}
+                  <td style={styles.td}>
+                  <span style={styles.status}>{status}</span>
+                  </td>
+
+                  {/* ACTIONS */}
+                  <td style={styles.td}>
+                   {status === "PENDING" && (
+                    <button
+                       style={styles.confirmBtn}
+                       onClick={() => updateStatus(order.id, "CONFIRMED")}
+                    >
+                       Confirm
+                    </button>
+                    )}
+
+                   {status === "CONFIRMED" && (
+                    <button
+                       style={styles.shipBtn}
+                       onClick={() => updateStatus(order.id, "SHIPPED")}
+                    >
+                       Ship
+                    </button>
+                    )}
+
+                    {status === "SHIPPED" && (
+                     <button
                         style={styles.outBtn}
-                        onClick={() =>
-                          updateStatus(order.id, "OUT_FOR_DELIVERY")
-                        }
-                      >
+                        onClick={() => updateStatus(order.id, "OUT_FOR_DELIVERY")}
+                     >
                         Out
-                      </button>
+                     </button>
+                     )}
 
-                      {/* DELIVERED */}
-                      <button
+                    {status === "OUT_FOR_DELIVERY" && (
+                     <button
                         style={styles.deliverBtn}
-                        onClick={() =>
-                          updateStatus(order.id, "DELIVERED")
-                        }
-                      >
+                        onClick={() => updateStatus(order.id, "DELIVERED")}
+                     >
                         Deliver
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                     </button>
+                    )}
+                 </td>
+               </tr>
+             );
+                })}
               </tbody>
             </table>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -217,10 +287,6 @@ const styles = {
     padding: "20px",
   },
 
-  logo: {
-    marginBottom: "20px",
-  },
-
   item: {
     padding: "12px",
     marginBottom: "10px",
@@ -237,25 +303,9 @@ const styles = {
     background: "#3b82f6",
   },
 
-  backBtn: {
-    marginTop: "20px",
-    width: "100%",
-    padding: "12px",
-    background: "#1f2937",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    textAlign: "left",
-  },
-
   main: {
     flex: 1,
     padding: "30px",
-  },
-
-  title: {
-    marginBottom: "20px",
   },
 
   cardGrid: {
@@ -264,46 +314,27 @@ const styles = {
     flexWrap: "wrap",
   },
 
-  cardBlue: {
-    background: "#2563eb",
-    padding: "20px",
-    borderRadius: "10px",
-    flex: "1",
-  },
-
-  cardYellow: {
-    background: "#eab308",
-    padding: "20px",
-    borderRadius: "10px",
-    flex: "1",
-  },
-
-  cardPurple: {
-    background: "#a855f7",
-    padding: "20px",
-    borderRadius: "10px",
-    flex: "1",
-  },
-
-  cardOrange: {
-    background: "#f97316",
-    padding: "20px",
-    borderRadius: "10px",
-    flex: "1",
-  },
-
-  cardGreen: {
-    background: "#16a34a",
-    padding: "20px",
-    borderRadius: "10px",
-    flex: "1",
-  },
+  cardBlue: { background: "#2563eb", padding: "20px", borderRadius: "10px", flex: 1 },
+  cardYellow: { background: "#eab308", padding: "20px", borderRadius: "10px", flex: 1 },
+  cardPurple: { background: "#a855f7", padding: "20px", borderRadius: "10px", flex: 1 },
+  cardOrange: { background: "#f97316", padding: "20px", borderRadius: "10px", flex: 1 },
+  cardGreen: { background: "#16a34a", padding: "20px", borderRadius: "10px", flex: 1 },
 
   table: {
     width: "100%",
     marginTop: "15px",
     borderCollapse: "collapse",
     background: "#1e293b",
+    textAlign: "center",
+  },
+
+  th: {
+    padding: "12px",
+    background: "#334155",
+  },
+
+  td: {
+    padding: "12px",
   },
 
   status: {
@@ -341,5 +372,14 @@ const styles = {
     border: "none",
     padding: "6px",
     cursor: "pointer",
+  },
+
+  popup: {
+    position: "fixed",
+    top: "20px",
+    right: "20px",
+    background: "#22c55e",
+    padding: "10px 20px",
+    borderRadius: "8px",
   },
 };

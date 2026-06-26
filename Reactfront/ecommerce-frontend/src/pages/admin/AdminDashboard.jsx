@@ -1,246 +1,308 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [revenue, setRevenue] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
+  const [userId, setUserId] = useState(null);
 
-  const adminId = localStorage.getItem("adminId");
   const token = localStorage.getItem("token");
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        const id = decoded.userId || decoded.sub || decoded.id;
+        setUserId(id);
+      } catch (err) {
+        console.log("JWT error:", err);
+      }
+    }
+  }, [token]);
 
-  const authHeader = {
+  const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${token}` },
-  };
+  });
 
-  // ---------------- FETCH PRODUCTS ----------------
   const fetchProducts = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/admin/products/${adminId}`,
-        authHeader
+        "http://localhost:8080/api/products",
+        getAuthHeaders()
       );
 
-      setProducts(res.data);
+      const allProducts = res.data || [];
 
-      // ✅ METHOD 1: Count from products
+      const myProducts = allProducts.filter((p) => {
+        const ownerId =
+          p.userId ||
+          p.createdBy ||
+          p.sellerId ||
+          p.user?.id ||
+          p.adminId;
+
+        return String(ownerId) === String(userId);
+      });
+
+      setProducts(myProducts);
+
       const uniqueCategories = new Set(
-        res.data.map((p) => p.category)
+        myProducts.map((p) => p.category)
       );
-      setCategoryCount(uniqueCategories.size);
 
+      setCategoryCount(uniqueCategories.size);
     } catch (err) {
       console.log("Products error:", err);
     }
   };
 
-  // ---------------- FETCH ORDERS ----------------
   const fetchOrders = async () => {
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/admin/orders/${adminId}`,
-        authHeader
+        "http://localhost:8080/api/admin/orders",
+        getAuthHeaders()
       );
-      setOrders(res.data);
+
+      const allOrders = res.data || [];
+
+      const myProductIds = products.map((p) => p.id);
+
+      const myOrders = allOrders.filter((order) => {
+        if (!Array.isArray(order.items)) return false;
+
+        return order.items.some((item) =>
+          myProductIds.includes(item.productId)
+        );
+      });
+
+      setOrders(myOrders);
+
+      const totalRevenue = myOrders.reduce((sum, order) => {
+        if (!Array.isArray(order.items)) return sum;
+
+        const orderTotal = order.items.reduce((sub, item) => {
+          if (myProductIds.includes(item.productId)) {
+            return sub + (item.price || 0) * (item.quantity || 1);
+          }
+          return sub;
+        }, 0);
+
+        return sum + orderTotal;
+      }, 0);
+
+      setRevenue(totalRevenue);
     } catch (err) {
       console.log("Orders error:", err);
     }
   };
 
-  // ---------------- FETCH REVENUE ----------------
-  const fetchRevenue = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/admin/revenue/${adminId}`,
-        authHeader
-      );
-      setRevenue(res.data.revenue || 0);
-    } catch (err) {
-      console.log("Revenue error:", err);
-    }
-  };
-
-  // ---------------- OPTIONAL: FETCH CATEGORY COUNT FROM BACKEND ----------------
-  const fetchCategoryCount = async () => {
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/admin/categories/${adminId}`,
-        authHeader
-      );
-      setCategoryCount(res.data.length);
-    } catch (err) {
-      console.log("Category error:", err);
-    }
-  };
+  useEffect(() => {
+    if (!userId) return;
+    fetchProducts();
+  }, [userId]);
 
   useEffect(() => {
-    fetchProducts();
+    if (products.length === 0) return;
     fetchOrders();
-    fetchRevenue();
+  }, [products]);
 
-    // 🔥 Uncomment if you have category API
-    // fetchCategoryCount();
+  const safeValue = (val) => {
+    if (val === null || val === undefined) return "-";
 
-  }, []);
+    if (typeof val === "object") {
+      return (
+        val.name ||
+        val.title ||
+        val.status ||
+        val.type ||
+        JSON.stringify(val)
+      );
+    }
+
+    return val;
+  };
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>Admin Dashboard</h1>
+      <h1 style={styles.title}>✨ E-Commerce Control Panel</h1>
 
-      {/* ✅ CATEGORY MANAGEMENT BUTTON */}
-      <div style={styles.topBar}>
-        <button
-          onClick={() => navigate("/admin/categories")}
-          style={styles.categoryBtn}
-        >
-          Manage Categories
-        </button>
-      </div>
-
-      {/* ================= STATS ================= */}
+      {/* STATS */}
       <div style={styles.grid}>
-        <div style={styles.card}>
-          <h3>Total Products</h3>
-          <p>{products.length}</p>
-        </div>
-
-        <div style={styles.card}>
-          <h3>Total Orders</h3>
-          <p>{orders.length}</p>
-        </div>
-
-        <div style={styles.card}>
-          <h3>Revenue</h3>
-          <p>₹ {revenue}</p>
-        </div>
-
-        <div style={styles.card}>
-          <h3>Total Categories</h3>
-          <p>{categoryCount}</p>
-        </div>
+        <StatCard title="Products" value={products.length} icon="📦" color="#7c3aed" />
+        <StatCard title="Orders" value={orders.length} icon="🛒" color="#06b6d4" />
+        <StatCard title="Categories" value={categoryCount} icon="📂" color="#f59e0b" />
+        <StatCard title="Revenue" value={`₹ ${revenue}`} icon="💰" color="#22c55e" />
       </div>
 
-      {/* ================= PRODUCTS TABLE ================= */}
-      <h2 style={styles.sectionTitle}>Your Products</h2>
+      <Section title="Products">
+        <Table
+          headers={["ID", "Name", "Category", "Price"]}
+          data={products.map((p) => [
+            safeValue(p.id),
+            safeValue(p.name),
+            safeValue(p.category),
+            `₹ ${safeValue(p.price)}`,
+          ])}
+        />
+      </Section>
 
-      <table style={styles.table}>
-        <thead style={styles.thead}>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Price</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.id} style={styles.row}>
-              <td>{p.id}</td>
-              <td>{p.name}</td>
-              <td>{p.category}</td>
-              <td>₹ {p.price}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* ================= ORDERS TABLE ================= */}
-      <h2 style={styles.sectionTitle}>Recent Orders</h2>
-
-      <table style={styles.table}>
-        <thead style={styles.thead}>
-          <tr>
-            <th>Order ID</th>
-            <th>Product</th>
-            <th>Qty</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {orders.map((o) => (
-            <tr key={o.id} style={styles.row}>
-              <td>{o.id}</td>
-              <td>{o.productName || o.productId}</td>
-              <td>{o.quantity}</td>
-              <td>₹ {o.totalPrice}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Section title="Orders">
+        <Table
+          headers={["Order ID", "Name", "City", "Status", "Total"]}
+          data={orders.map((o) => [
+            safeValue(o.id),
+            safeValue(o.name),
+            safeValue(o.city),
+            safeValue(o.status),
+            `₹ ${safeValue(o.totalAmount)}`,
+          ])}
+        />
+      </Section>
     </div>
   );
 };
 
 export default AdminDashboard;
 
+/* COMPONENTS */
+
+const StatCard = ({ title, value, icon, color }) => (
+  <div
+    style={{
+      ...styles.card,
+      borderLeft: `5px solid ${color}`,
+    }}
+  >
+    <div style={{ fontSize: "30px" }}>{icon}</div>
+    <h3>{title}</h3>
+    <p style={styles.stat}>{value}</p>
+  </div>
+);
+
+const Section = ({ title, children }) => (
+  <div style={styles.section}>
+    <h2 style={styles.sectionTitle}>{title}</h2>
+    {children}
+  </div>
+);
+
+const Table = ({ headers, data }) => (
+  <div style={styles.tableWrapper}>
+    <table style={styles.table}>
+      <thead>
+        <tr>
+          {headers.map((h, i) => (
+            <th key={i} style={styles.th}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.length === 0 ? (
+          <tr>
+            <td colSpan={headers.length} style={styles.center}>
+              No Data Found
+            </td>
+          </tr>
+        ) : (
+          data.map((row, i) => (
+            <tr key={i} style={styles.row}>
+              {row.map((cell, j) => (
+                <td key={j} style={styles.td}>{cell}</td>
+              ))}
+            </tr>
+          ))
+        )}
+      </tbody>
+    </table>
+  </div>
+);
+
+/* STYLES */
+
 const styles = {
   container: {
     padding: "30px",
-    background: "#f4f6f8",
     minHeight: "100vh",
-    fontFamily: "Arial",
+    fontFamily: "Poppins, sans-serif",
+    background:
+      "radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617)",
+    color: "#fff",
   },
 
   title: {
     textAlign: "center",
-    marginBottom: "20px",
-  },
-
-  topBar: {
-    display: "flex",
-    justifyContent: "flex-end",
-    marginBottom: "20px",
-  },
-
-  categoryBtn: {
-    padding: "10px 20px",
-    background: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
+    fontSize: "34px",
+    marginBottom: "30px",
+    fontWeight: "700",
+    letterSpacing: "1px",
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))",
     gap: "20px",
-    marginBottom: "30px",
   },
 
   card: {
-    background: "white",
+    background: "rgba(255,255,255,0.06)",
+    backdropFilter: "blur(12px)",
+    borderRadius: "16px",
     padding: "20px",
-    borderRadius: "12px",
     textAlign: "center",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+    transition: "0.3s",
+    cursor: "pointer",
+    boxShadow: "0 0 20px rgba(0,0,0,0.4)",
+  },
+
+  stat: {
+    fontSize: "26px",
+    fontWeight: "700",
+    marginTop: "10px",
+  },
+
+  section: {
+    marginTop: "50px",
   },
 
   sectionTitle: {
-    marginTop: "40px",
-    marginBottom: "10px",
+    fontSize: "20px",
+    marginBottom: "15px",
+  },
+
+  tableWrapper: {
+    overflowX: "auto",
+    borderRadius: "14px",
   },
 
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    background: "white",
+    background: "rgba(255,255,255,0.95)",
+    color: "#111",
     borderRadius: "10px",
-    overflow: "hidden",
   },
 
-  thead: {
-    background: "#333",
-    color: "white",
+  th: {
+    padding: "14px",
+    background: "#0f172a",
+    color: "#fff",
+  },
+
+  td: {
+    padding: "12px",
+    borderBottom: "1px solid #eee",
+    textAlign: "center",
   },
 
   row: {
-    borderBottom: "1px solid #ddd",
+    transition: "0.2s",
+  },
+
+  center: {
+    textAlign: "center",
+    padding: "20px",
   },
 };

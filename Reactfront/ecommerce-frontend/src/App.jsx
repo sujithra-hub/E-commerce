@@ -23,6 +23,7 @@ import AdminRoute from "./components/AdminRoute";
 import AdminLayout from "./components/AdminLayout";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOrders from "./pages/admin/AdminOrders";
 
 
 //import CategoryPage from "./pages/CategoryPage";
@@ -159,6 +160,7 @@ function App() {
         />
         <Route path="/admin/categories" element={<AdminCategories />} />
         <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
       </Routes>
     </>
   );
