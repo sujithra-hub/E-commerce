@@ -18,9 +18,17 @@ public class AdminCategoryController {
     }
 
     // ================= ADD CATEGORY (ADMIN)
-    @PostMapping
-    public Category addCategory(@RequestBody Category category) {
-        return categoryService.addCategoryWithValidation(category);
+     @PostMapping
+    public Category addCategory(
+            @RequestBody Category category,
+            @RequestHeader("Authorization") String token) {
+
+        // Extract userId from JWT (IMPLEMENT in service/helper)
+        Long userId = extractUserIdFromToken(token);
+
+        category.setCreatedBy(userId);
+
+        return categoryService.addCategory(category);
     }
 
     // ================= GET ALL CATEGORIES (ADMIN)
@@ -55,5 +63,17 @@ public class AdminCategoryController {
     @GetMapping("/admin/{adminId}")
     public List<Category> getCategoriesByAdmin(@PathVariable Long adminId) {
         return categoryService.getCategoriesByAdmin(adminId);
+    }
+     private Long extractUserIdFromToken(String token) {
+
+        // remove Bearer prefix
+        String jwt = token.replace("Bearer ", "");
+
+        // 👉 CALL YOUR JWT SERVICE HERE
+        // Example:
+        // return jwtService.extractUserId(jwt);
+
+        // TEMP fallback (replace this properly)
+        return Long.parseLong("1");
     }
 }

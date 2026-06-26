@@ -1,14 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const AdminCategories = () => {
   const [view, setView] = useState("dashboard");
   const [categories, setCategories] = useState([]);
-  const [form, setForm] = useState({ name: "", description: "" });
   const [editId, setEditId] = useState(null);
 
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+  });
+
   const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
+
+  // ================= GET USER ID FROM TOKEN (LIKE PRODUCTS) =================
+  let userId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.userId || decoded.id;
+    } catch (err) {
+      console.log("Invalid token");
+    }
+  }
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${token}` },
@@ -27,11 +42,19 @@ const AdminCategories = () => {
     }
   };
 
-  // ================= SAVE =================
-  const handleSubmit = async () => {
-    const payload = { ...form, createdBy: userId };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
+  // ================= SAVE (CREATE / UPDATE) =================
+  const handleSubmit = async () => {
     try {
+      const payload = {
+        name: form.name,
+        description: form.description,
+        createdBy: userId, // 🔥 THIS WILL GO TO DB
+      };
+
       if (editId) {
         await axios.put(
           `http://localhost:8080/api/admin/categories/${editId}`,
@@ -63,81 +86,64 @@ const AdminCategories = () => {
     fetchCategories();
   };
 
+  // ================= EDIT =================
   const editCategory = (cat) => {
-    setForm({ name: cat.name, description: cat.description });
+    setForm({
+      name: cat.name,
+      description: cat.description,
+    });
     setEditId(cat.id);
     setView("form");
   };
 
+  // ================= RESET =================
   const resetForm = () => {
     setForm({ name: "", description: "" });
     setEditId(null);
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  // ================= FILTER MY CATEGORIES =================
+  const myCategories = categories.filter((c) => {
+  const createdBy = c.createdBy;
 
-  const myCategories = categories.filter(
-    (c) => String(c.createdBy) === String(userId)
-  );
+  if (!createdBy || !userId) return false;
+
+  // if backend sends object or id both handled
+  if (typeof createdBy === "object") {
+    return String(createdBy.id) === String(userId);
+  }
+
+  return String(createdBy) === String(userId);
+});
 
   return (
     <div style={styles.wrapper}>
-      {/* ================= SIDEBAR ================= */}
+      {/* SIDEBAR */}
       <div style={styles.sidebar}>
-        <h2 style={styles.logo}>📦 Admin</h2>
+        <h2>📦 Admin Categories</h2>
 
-        <div
-          style={view === "dashboard" ? styles.activeItem : styles.item}
-          onClick={() => setView("dashboard")}
-        >
+        <div onClick={() => setView("dashboard")} style={styles.item}>
           📊 Dashboard
         </div>
 
-        <div
-          style={view === "form" ? styles.activeItem : styles.item}
-          onClick={() => setView("form")}
-        >
+        <div onClick={() => setView("form")} style={styles.item}>
           ➕ Add Category
         </div>
 
-        <div
-          style={view === "list" ? styles.activeItem : styles.item}
-          onClick={() => setView("list")}
-        >
+        <div onClick={() => setView("list")} style={styles.item}>
           📋 View Categories
         </div>
-         <div style={{ marginTop: "20px" }}>
-      <button
-  style={{
-    background: "#1f2937",
-    color: "white",
-     marginTop: "-10px",
-    padding: "15px",
-    width: "100%",          // important for sidebar look
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontSize: "15px",
-    textAlign: "left",      // 👈 aligns text to left
-    paddingLeft: "20px",    // 👈 gives proper spacing
-    display: "flex",
-    alignItems: "center",
-    gap: "10px"
-  }}
-  onClick={() => setView("dashboard")}
->
-  ⬅ Back
-</button>
-    </div>
+
+        <button onClick={() => setView("dashboard")} style={styles.backBtn}>
+          ⬅ Back
+        </button>
       </div>
 
-      {/* ================= MAIN CONTENT ================= */}
+      {/* MAIN */}
       <div style={styles.main}>
-        <h1 style={styles.title}>Category Management</h1>
+        <h1>Category Management</h1>
 
-        {/* ================= DASHBOARD ================= */}
+        {/* DASHBOARD */}
         {view === "dashboard" && (
           <div style={styles.cardGrid}>
             <div style={styles.cardBlue}>
@@ -152,10 +158,10 @@ const AdminCategories = () => {
           </div>
         )}
 
-        {/* ================= FORM ================= */}
+        {/* FORM */}
         {view === "form" && (
           <div style={styles.formBox}>
-            <h2>{editId ? "✏️ Update Category" : "➕ Create Category"}</h2>
+            <h2>{editId ? "Update Category" : "Create Category"}</h2>
 
             <input
               style={styles.input}
@@ -167,7 +173,7 @@ const AdminCategories = () => {
             />
 
             <textarea
-              style={styles.textarea}
+              style={styles.input}
               placeholder="Description"
               value={form.description}
               onChange={(e) =>
@@ -185,32 +191,10 @@ const AdminCategories = () => {
           </div>
         )}
 
-        {/* ================= LIST ================= */}
+        {/* LIST */}
         {view === "list" && (
-          <div>
-            {/* TOTAL */}
-            <h2>📊 Total Categories</h2>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.id}</td>
-                    <td>{c.name}</td>
-                    <td>{c.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* MY */}
-            <h2 style={{ marginTop: 30 }}>🧑 My Categories</h2>
+          <>
+            <h2>All Categories</h2>
 
             <table style={styles.table}>
               <thead>
@@ -223,23 +207,27 @@ const AdminCategories = () => {
               </thead>
 
               <tbody>
-                {myCategories.map((c) => (
+                {categories.map((c) => (
                   <tr key={c.id}>
                     <td>{c.id}</td>
                     <td>{c.name}</td>
                     <td>{c.description}</td>
-                    <td>
-                      <button
-                        style={styles.editBtn}
-                        onClick={() => editCategory(c)}
-                      >
-                        Edit
-                      </button>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-                      <button
-                        style={styles.deleteBtn}
-                        onClick={() => deleteCategory(c.id)}
-                      >
+            <h2 style={{ marginTop: 30 }}>My Categories</h2>
+
+            <table style={styles.table}>
+              <tbody>
+                {myCategories.map((c) => (
+                  <tr key={c.id}>
+                    <td>{c.name}</td>
+                    <td>{c.description}</td>
+                    <td>
+                      <button onClick={() => editCategory(c)}>Edit</button>
+                      <button onClick={() => deleteCategory(c.id)}>
                         Delete
                       </button>
                     </td>
@@ -247,7 +235,7 @@ const AdminCategories = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          </>
         )}
       </div>
     </div>
