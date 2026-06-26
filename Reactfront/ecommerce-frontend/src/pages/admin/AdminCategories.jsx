@@ -362,4 +362,20 @@ const styles = {
     padding: "5px",
     color: "white",
   },
+   backBtn: {
+  marginTop: "10px",
+  background: "#1f2937",
+  color: "white",
+  padding: "10px 15px",
+  width: "100%",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+
+  display: "flex",
+  justifyContent: "flex-start", // 🔥 forces left alignment
+  alignItems: "center",
+  gap: "8px",
+  fontSize:"15px",
+},
 };
