@@ -61,9 +61,9 @@ public List<Product> getByCategory(@PathVariable Long id) {
     // ADD PRODUCT (WITHOUT IMAGE)
     // =====================
     @PostMapping
-    public ResponseEntity<?> addProduct(@RequestBody Product product, @RequestParam Long categoryId) {
+    public ResponseEntity<?> addProduct(@RequestBody Product product, @RequestParam Long categoryId,@RequestParam Long userId) {
         try {
-            Product saved = productService.addProduct(product, categoryId);
+            Product saved = productService.addProduct(product, categoryId,userId);
             return ResponseEntity.status(201).body(saved);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -80,6 +80,7 @@ public List<Product> getByCategory(@PathVariable Long id) {
             @RequestParam double price,
             @RequestParam int stock,
             @RequestParam Long categoryId,
+            @RequestParam Long userId,
             @RequestParam String createdBy,
             @RequestParam("image") MultipartFile image
     ) {
@@ -115,7 +116,7 @@ public List<Product> getByCategory(@PathVariable Long id) {
             product.setCreatedBy(createdBy);
             product.setImageUrl(imageUrl);
 
-            Product saved = productService.addProduct(product, categoryId);
+            Product saved = productService.addProduct(product, categoryId,userId);
 
             return ResponseEntity.status(201).body(saved);
 

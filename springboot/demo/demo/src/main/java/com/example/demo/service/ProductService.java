@@ -30,7 +30,7 @@ public class ProductService {
     // =====================
     // ADD PRODUCT (ADMIN) ✅ FIXED
     // =====================
-    public Product addProduct(Product product, Long categoryId) {
+    public Product addProduct(Product product, Long categoryId,Long userId) {
 
         // validate categoryId
         if (categoryId == null) {
@@ -43,7 +43,8 @@ public class ProductService {
 
         // attach category to product
         product.setCategory(category);
-
+        product.setCreatedBy(String.valueOf(userId));
+        product.setId(null);
         // default values
         product.setActive(product.getStock() > 0);
         product.setAverageRating(0.0);

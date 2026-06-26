@@ -7,9 +7,15 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.config.JwtUtil;
 import com.example.demo.model.Product;
 import com.example.demo.service.ProductService;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.example.demo.service.CloudinaryService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails; // adjust package if different
 
 @RestController
 @RequestMapping("/api/admin/products")
@@ -18,25 +24,37 @@ public class AdminProductController {
 
     private final ProductService productService;
     private final CloudinaryService cloudinaryService;
+    private final JwtUtil jwtUtil;
 
     public AdminProductController(ProductService productService,
-                                 CloudinaryService cloudinaryService) {
+                                 CloudinaryService cloudinaryService,
+                                 JwtUtil jwtUtil) {
         this.productService = productService;
         this.cloudinaryService = cloudinaryService;
+        this.jwtUtil = jwtUtil;
     }
 
     // =====================
     // ADD PRODUCT
     // =====================
-    @PostMapping
-    public ResponseEntity<?> addProduct(
-            @RequestBody Product product,
-            @RequestParam Long categoryId
-    ) {
-        return ResponseEntity.ok(
-                productService.addProduct(product, categoryId)
-        );
-    }
+@PostMapping
+public ResponseEntity<?> addProduct(
+        @RequestBody Product product,
+        @RequestParam Long categoryId,
+        HttpServletRequest request
+) {
+
+    String header = request.getHeader("Authorization");
+    String token = header.substring(7);
+
+    Long userId = jwtUtil.extractUserId(token); // ✅ from token
+
+    product.setCreatedBy(String.valueOf(userId));
+
+    return ResponseEntity.ok(
+            productService.addProduct(product, categoryId, userId)
+    );
+}
 
     // =====================
     // UPDATE PRODUCT

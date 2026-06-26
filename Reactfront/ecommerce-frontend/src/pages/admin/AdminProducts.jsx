@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 const AdminProducts = () => {
   const [view, setView] = useState("dashboard");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [editId, setEditId] = useState(null);
-
   const [popup, setPopup] = useState("");
 
   const [form, setForm] = useState({
@@ -20,8 +20,18 @@ const AdminProducts = () => {
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
 
+  // ================= AUTH =================
   const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("userId");
+
+  let userId = null;
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      userId = decoded.userId || decoded.id;
+    } catch (err) {
+      console.log("Invalid token");
+    }
+  }
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${token}` },
@@ -57,7 +67,7 @@ const AdminProducts = () => {
     fetchCategories();
   }, []);
 
-  // ================= IMAGE VALIDATION =================
+  // ================= IMAGE =================
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -80,7 +90,6 @@ const AdminProducts = () => {
     setPreview(URL.createObjectURL(file));
   };
 
-  // ❌ REMOVE IMAGE (NEW FEATURE)
   const removeImage = () => {
     setImageFile(null);
     setPreview(null);
@@ -122,7 +131,6 @@ const AdminProducts = () => {
         price: parseFloat(form.price),
         stock: parseInt(form.stock),
         imageUrl,
-        createdBy: userId,
       };
 
       if (editId) {
@@ -162,7 +170,6 @@ const AdminProducts = () => {
     fetchProducts();
   };
 
-  // ================= EDIT =================
   const editProduct = (p) => {
     setForm({
       name: p.name,
@@ -192,15 +199,21 @@ const AdminProducts = () => {
     setEditId(null);
   };
 
-  const myProducts = products.filter(
-    (p) => String(p.createdBy) === String(userId)
-  );
+  const myProducts = products.filter((p) => {
+    const createdBy = p.createdBy;
+    if (!createdBy) return false;
+
+    if (typeof createdBy === "object") {
+      return String(createdBy.id) === String(userId);
+    }
+
+    return String(createdBy) === String(userId);
+  });
 
   return (
     <div style={styles.wrapper}>
       {popup && <div style={styles.popup}>{popup}</div>}
 
-      {/* SIDEBAR */}
       <div style={styles.sidebar}>
         <h2>📦 Admin Products</h2>
 
@@ -221,7 +234,6 @@ const AdminProducts = () => {
         </button>
       </div>
 
-      {/* MAIN */}
       <div style={styles.main}>
         <h1>Product Management</h1>
 
@@ -232,6 +244,7 @@ const AdminProducts = () => {
               <h2>{products.length}</h2>
               <p>Total Products</p>
             </div>
+
             <div style={styles.cardGreen}>
               <h2>{myProducts.length}</h2>
               <p>My Products</p>
@@ -274,17 +287,10 @@ const AdminProducts = () => {
               style={styles.input}
             />
 
-            {/* IMAGE */}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              style={styles.input}
-            />
+            <input type="file" onChange={handleImageChange} style={styles.input} />
 
-            {/* PREVIEW + REMOVE */}
             {preview && (
-              <div style={{ position: "relative", display: "inline-block" }}>
+              <div style={{ position: "relative" }}>
                 <img src={preview} style={styles.preview} />
                 <button onClick={removeImage} style={styles.removeBtn}>
                   ❌
@@ -292,7 +298,6 @@ const AdminProducts = () => {
               </div>
             )}
 
-            {/* CATEGORY */}
             <select
               value={form.categoryId}
               onChange={(e) =>
@@ -328,23 +333,28 @@ const AdminProducts = () => {
                 <tr>
                   <th>ID</th>
                   <th>Image</th>
+                  <th>Description</th>
                   <th>Name</th>
                   <th>Price</th>
                   <th>Stock</th>
-                  <th>Category</th>
                 </tr>
               </thead>
+
               <tbody>
                 {products.map((p) => (
                   <tr key={p.id}>
                     <td>{p.id}</td>
                     <td>
-                      <img src={p.imageUrl} style={styles.img} />
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        style={styles.img}
+                      />
                     </td>
+                    <td>{p.description}</td>
                     <td>{p.name}</td>
                     <td>₹{p.price}</td>
                     <td>{p.stock}</td>
-                    <td>{p.category?.name}</td>
                   </tr>
                 ))}
               </tbody>
@@ -352,17 +362,7 @@ const AdminProducts = () => {
 
             <h2 style={{ marginTop: 30 }}>🧑 My Products</h2>
 
-            {/* FIXED TABLE HEADER */}
             <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
               <tbody>
                 {myProducts.map((p) => (
                   <tr key={p.id}>
@@ -388,6 +388,7 @@ export default AdminProducts;
 
 /* ================= STYLES ================= */
 const styles = {
+  /* ================= WRAPPER ================= */
   wrapper: {
     display: "flex",
     minHeight: "100vh",
@@ -396,6 +397,7 @@ const styles = {
     fontFamily: "Arial",
   },
 
+  /* ================= SIDEBAR ================= */
   sidebar: {
     width: "240px",
     background: "#111827",
@@ -413,22 +415,23 @@ const styles = {
   },
 
   backBtn: {
-    marginTop: "-1px",
+    marginTop: "10px",
     background: "#1f2937",
     color: "white",
     padding: "12px",
     border: "none",
     borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "15px",
-    textAlign: "left",  
+    textAlign: "left",
   },
 
+  /* ================= MAIN ================= */
   main: {
     flex: 1,
     padding: "30px",
   },
 
+  /* ================= CARDS ================= */
   cardGrid: {
     display: "flex",
     gap: "20px",
@@ -448,6 +451,7 @@ const styles = {
     flex: 1,
   },
 
+  /* ================= FORM ================= */
   formBox: {
     background: "#1e293b",
     padding: "20px",
@@ -466,50 +470,110 @@ const styles = {
     padding: "10px",
     border: "none",
     marginRight: "10px",
+    cursor: "pointer",
   },
 
   cancelBtn: {
     background: "#ef4444",
     padding: "10px",
     border: "none",
+    cursor: "pointer",
   },
 
+  /* ================= TABLE (IMPORTANT FIX) ================= */
   table: {
     width: "100%",
     marginTop: "15px",
     borderCollapse: "collapse",
     background: "#1e293b",
+    tableLayout: "fixed",
   },
 
+  th: {
+    background: "#334155",
+    color: "white",
+    padding: "12px",
+    borderBottom: "1px solid #475569",
+    fontSize: "14px",
+
+    /* 🔥 KEY FIX: CENTER HEADERS */
+    textAlign: "center",
+  },
+
+  td: {
+    padding: "12px",
+    borderBottom: "1px solid #334155",
+    fontSize: "14px",
+    verticalAlign: "middle",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+
+    /* default center alignment */
+    textAlign: "center",
+  },
+
+  /* ================= SPECIAL COLUMN ALIGNMENT ================= */
+
+  colDesc: {
+    textAlign: "left",
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+  },
+
+  colImg: {
+    textAlign: "center",
+  },
+
+  colId: {
+    textAlign: "center",
+    width: "70px",
+  },
+
+  colPrice: {
+    textAlign: "center",
+  },
+
+  colStock: {
+    textAlign: "center",
+  },
+
+  /* ================= IMAGE ================= */
   img: {
     width: "50px",
     height: "50px",
     objectFit: "cover",
     borderRadius: "6px",
+    display: "block",
+    margin: "0 auto", // centers image properly under header
+  },
+  id:{
+    margin: "0 auto",
   },
 
-  preview: {
-    width: "100%",
-    height: "150px",
-    objectFit: "cover",
-    borderRadius: "8px",
-    marginBottom: "10px",
-  },
-
-  removeBtn: {
-    position: "absolute",
-    top: "5px",
-    right: "5px",
-    background: "red",
+  /* ================= BUTTONS ================= */
+  editBtn: {
+    marginRight: "8px",
+    padding: "5px 10px",
+    background: "#3b82f6",
     color: "white",
     border: "none",
-    borderRadius: "50%",
-    width: "25px",
-    height: "25px",
+    borderRadius: "4px",
     cursor: "pointer",
-    fontSize: "14px",
+    fontSize: "12px",
   },
 
+  delBtn: {
+    padding: "5px 10px",
+    background: "#ef4444",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "12px",
+  },
+
+  /* ================= POPUP ================= */
   popup: {
     position: "fixed",
     top: "20px",
