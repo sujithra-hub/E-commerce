@@ -1,27 +1,38 @@
 package com.example.demo.service;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
+import java.nio.file.Path;
+import java.util.Map;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.dto.ChangePasswordDTO;
 import com.example.demo.dto.UserProfileDTO;
 import com.example.demo.model.User;
 import com.example.demo.model.User.Role;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.dto.UserProfileDTO;
 import org.springframework.security.core.Authentication;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final Cloudinary cloudinary;
 
-    public UserService(UserRepository userRepo, PasswordEncoder passwordEncoder) {
-        this.userRepo = userRepo;
-        this.passwordEncoder = passwordEncoder;
-    }
+    public UserService(UserRepository userRepo,
+                   PasswordEncoder passwordEncoder,
+                   Cloudinary cloudinary) {
+    this.userRepo = userRepo;
+    this.passwordEncoder = passwordEncoder;
+    this.cloudinary = cloudinary;
+}
 
     // =========================
     // REGISTER USER / ADMIN
@@ -95,10 +106,7 @@ public class UserService {
         return "User deleted successfully";
     }
 
-    // =========================
-    // PROFILE - GET
-    // =========================
-    public UserProfileDTO getProfile(String email) {
+  public UserProfileDTO getProfile(String email) {
 
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -108,23 +116,78 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole().name(),
-                user.getPhone()
+                user.getPhone(),
+                user.getAddress(),
+                user.getCity(),
+                user.getCountry(),
+                user.getProfileImage() // full URL
         );
     }
 
-    // =========================
-    // PROFILE - UPDATE
-    // =========================
+    // ================= PROFILE UPDATE =================
     public UserProfileDTO updateProfile(String email, UserProfileDTO dto) {
 
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setName(dto.getName());
-        user.setPhone(dto.getPhone());
+        if (dto.getName() != null) user.setName(dto.getName());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+        if (dto.getAddress() != null) user.setAddress(dto.getAddress());
+        if (dto.getCity() != null) user.setCity(dto.getCity());
+        if (dto.getCountry() != null) user.setCountry(dto.getCountry());
 
         userRepo.save(user);
 
         return getProfile(email);
+    }
+
+    // ================= CHANGE PASSWORD =================
+    public void changePassword(String email, ChangePasswordDTO dto) {
+
+        if (dto.getOldPassword() == null || dto.getNewPassword() == null) {
+            throw new RuntimeException("Passwords required");
+        }
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("Old password incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepo.save(user);
+    }
+
+    // ================= IMAGE UPLOAD (Cloudinary) =================
+    public String uploadProfileImage(String email, MultipartFile file) {
+
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("File is empty");
+            }
+
+            if (!file.getContentType().startsWith("image/")) {
+                throw new RuntimeException("Only image files allowed");
+            }
+
+            User user = userRepo.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap("folder", "profile_images")
+            );
+
+            String imageUrl = uploadResult.get("secure_url").toString();
+
+            user.setProfileImage(imageUrl);
+            userRepo.save(user);
+
+            return imageUrl;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Image upload failed");
+        }
     }
 }
