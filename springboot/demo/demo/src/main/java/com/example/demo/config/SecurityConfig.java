@@ -90,7 +90,7 @@ public class SecurityConfig {
     // IMPORTANT: specific order access handled in controller
     .requestMatchers("/api/orders/track/**").hasAnyRole("USER","ADMIN")
     .requestMatchers("/api/orders/**").authenticated()
-
+    .requestMatchers("/api/user/profile").authenticated()
     .anyRequest().authenticated()
 );
 

@@ -23,6 +23,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(name = "phone")
+    private String phone;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -41,7 +44,6 @@ public class User {
             this.role = Role.USER;
         }
     }
-
     // ================= GETTERS & SETTERS =================
 
     public Long getId() {
@@ -83,4 +85,11 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+    public String getPhone() {
+    return phone;
+}
+
+public void setPhone(String phone) {
+    this.phone = phone;
+}
 }

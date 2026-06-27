@@ -5,9 +5,12 @@ import java.util.Objects;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.UserProfileDTO;
 import com.example.demo.model.User;
 import com.example.demo.model.User.Role;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.dto.UserProfileDTO;
+import org.springframework.security.core.Authentication;
 
 @Service
 public class UserService {
@@ -90,5 +93,38 @@ public class UserService {
 
         userRepo.deleteById(id);
         return "User deleted successfully";
+    }
+
+    // =========================
+    // PROFILE - GET
+    // =========================
+    public UserProfileDTO getProfile(String email) {
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserProfileDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getPhone()
+        );
+    }
+
+    // =========================
+    // PROFILE - UPDATE
+    // =========================
+    public UserProfileDTO updateProfile(String email, UserProfileDTO dto) {
+
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setName(dto.getName());
+        user.setPhone(dto.getPhone());
+
+        userRepo.save(user);
+
+        return getProfile(email);
     }
 }

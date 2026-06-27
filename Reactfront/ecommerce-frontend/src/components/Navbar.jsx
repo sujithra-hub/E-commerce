@@ -57,7 +57,9 @@ const Navbar = () => {
         <div style={styles.centerSection}>SHOPMART</div>
 
         <div style={styles.rightSection}>
-          <div style={styles.profileCircle}>👤</div>
+          <button style={styles.profileCircle} onClick={() =>navigate("/Profile")}>
+            👤
+          </button>
 
           <button style={styles.iconBtn} onClick={() => navigate("/wishlist")}>
             ❤️
