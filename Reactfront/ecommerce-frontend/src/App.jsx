@@ -24,6 +24,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminCategories from "./pages/admin/AdminCategories";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminProfile from "./pages/admin/AdminProfile";
 
 
 //import CategoryPage from "./pages/CategoryPage";
@@ -34,6 +35,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 /* COMMON */
 import Navbar from "./components/Navbar";
+
 
 function App() {
   // ✅ Check login status instead of route matching
@@ -158,9 +160,46 @@ function App() {
             </AdminRoute>
           }
         />
-        <Route path="/admin/categories" element={<AdminCategories />} />
-        <Route path="/admin/products" element={<AdminProducts />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route
+          path="/admin/categories"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminCategories />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminProducts />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminOrders />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/AdminProfile"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <AdminProfile />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
       </Routes>
     </>
   );
