@@ -227,40 +227,40 @@ const styles = {
     padding: "30px",
     minHeight: "100vh",
     fontFamily: "Poppins, sans-serif",
-    background:
-      "radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617)",
-    color: "#fff",
+    background: "#f5f7fb", // soft neutral background
+    color: "#1e293b",
   },
 
   title: {
     textAlign: "center",
-    fontSize: "34px",
+    fontSize: "32px",
     marginBottom: "30px",
     fontWeight: "700",
-    letterSpacing: "1px",
+    color: "#0f172a",
   },
 
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))",
+    gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
     gap: "20px",
   },
 
   card: {
-    background: "rgba(255,255,255,0.06)",
-    backdropFilter: "blur(12px)",
+    background: "#ffffff",
     borderRadius: "16px",
-    padding: "20px",
+    padding: "22px",
     textAlign: "center",
-    transition: "0.3s",
+    transition: "0.25s ease",
     cursor: "pointer",
-    boxShadow: "0 0 20px rgba(0,0,0,0.4)",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.06)",
+    border: "1px solid #e2e8f0",
   },
 
   stat: {
-    fontSize: "26px",
+    fontSize: "28px",
     fontWeight: "700",
     marginTop: "10px",
+    color: "#0ea5e9", // accent blue
   },
 
   section: {
@@ -268,33 +268,38 @@ const styles = {
   },
 
   sectionTitle: {
-    fontSize: "20px",
+    fontSize: "22px",
     marginBottom: "15px",
+    fontWeight: "600",
+    color: "#0f172a",
   },
 
   tableWrapper: {
     overflowX: "auto",
-    borderRadius: "14px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 16px rgba(0,0,0,0.05)",
   },
 
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    background: "rgba(255,255,255,0.95)",
-    color: "#111",
-    borderRadius: "10px",
+    background: "#ffffff",
+    borderRadius: "12px",
   },
 
   th: {
     padding: "14px",
     background: "#0f172a",
     color: "#fff",
+    fontWeight: "600",
+    fontSize: "14px",
   },
 
   td: {
     padding: "12px",
-    borderBottom: "1px solid #eee",
+    borderBottom: "1px solid #e5e7eb",
     textAlign: "center",
+    fontSize: "14px",
   },
 
   row: {
@@ -304,5 +309,6 @@ const styles = {
   center: {
     textAlign: "center",
     padding: "20px",
+    color: "#64748b",
   },
 };
