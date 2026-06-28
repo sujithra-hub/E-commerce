@@ -249,133 +249,197 @@ const styles = {
   wrapper: {
     display: "flex",
     minHeight: "100vh",
-    background: "#0f172a",
-    color: "white",
-    fontFamily: "Arial",
+    background: "#f4f6f9", // soft neutral (formal)
+    color: "#1e293b",
+    fontFamily: "Inter, Poppins, sans-serif",
   },
 
+  /* SIDEBAR */
   sidebar: {
-    width: "220px",
-    background: "#111827",
-    padding: "20px",
+    width: "240px",
+    background: "#1e293b", // deep navy (not pure black)
+    padding: "22px",
+    color: "#cbd5e1",
+    borderRight: "1px solid rgba(255,255,255,0.05)",
   },
 
   logo: {
-    marginBottom: "20px",
+    marginBottom: "35px",
+    fontSize: "20px",
+    fontWeight: "600",
+    color: "#e2e8f0",
+    letterSpacing: "0.5px",
   },
 
   item: {
-    padding: "12px",
+    padding: "12px 14px",
     marginBottom: "10px",
     cursor: "pointer",
-    borderRadius: "8px",
-    background: "#1f2937",
+    borderRadius: "10px",
+    background: "transparent",
+    transition: "all 0.25s ease",
   },
 
   activeItem: {
-    padding: "12px",
+    padding: "12px 14px",
     marginBottom: "10px",
     cursor: "pointer",
-    borderRadius: "8px",
-    background: "#3b82f6",
+    borderRadius: "10px",
+    background: "#1d4ed8", // controlled accent
+    color: "#fff",
+    boxShadow: "0 4px 12px rgba(29,78,216,0.35)",
   },
 
+  /* MAIN AREA */
   main: {
     flex: 1,
     padding: "30px",
   },
 
   title: {
-    marginBottom: "20px",
+    marginBottom: "25px",
+    fontSize: "26px",
+    fontWeight: "600",
+    color: "#0f172a",
   },
 
+  /* KPI CARDS */
   cardGrid: {
     display: "flex",
     gap: "20px",
+    marginBottom: "30px",
   },
 
   cardBlue: {
-    background: "#2563eb",
-    padding: "20px",
-    borderRadius: "10px",
+    background: "#ffffff",
+    padding: "22px",
+    borderRadius: "14px",
     flex: 1,
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
   },
 
   cardGreen: {
-    background: "#16a34a",
-    padding: "20px",
-    borderRadius: "10px",
+    background: "#ffffff",
+    padding: "22px",
+    borderRadius: "14px",
     flex: 1,
+    border: "1px solid #e2e8f0",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
   },
 
+  /* FORM SECTION */
   formBox: {
-    background: "#1e293b",
-    padding: "20px",
-    borderRadius: "10px",
+    background: "#ffffff",
+    padding: "22px",
+    borderRadius: "14px",
     maxWidth: "450px",
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
   },
 
   input: {
     width: "100%",
-    padding: "10px",
-    marginBottom: "10px",
+    padding: "12px",
+    marginBottom: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    background: "#f9fafb",
+    fontSize: "14px",
+    outline: "none",
   },
 
   textarea: {
     width: "100%",
-    height: "80px",
-    padding: "10px",
+    height: "90px",
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    background: "#f9fafb",
   },
 
+  /* BUTTONS */
   saveBtn: {
-    background: "#22c55e",
-    padding: "10px",
+    background: "#1d4ed8",
+    color: "#fff",
+    padding: "10px 18px",
     border: "none",
     marginRight: "10px",
     cursor: "pointer",
+    borderRadius: "8px",
+    fontWeight: "500",
+    letterSpacing: "0.3px",
   },
 
   cancelBtn: {
-    background: "#ef4444",
-    padding: "10px",
+    background: "#e2e8f0",
+    color: "#0f172a",
+    padding: "10px 18px",
     border: "none",
     cursor: "pointer",
+    borderRadius: "8px",
   },
 
+  /* TABLE */
   table: {
     width: "100%",
-    marginTop: "15px",
+    marginTop: "20px",
     borderCollapse: "collapse",
-    background: "#1e293b",
+    background: "#ffffff",
+    borderRadius: "12px",
+    overflow: "hidden",
+    border: "1px solid #e5e7eb",
   },
 
+  th: {
+    padding: "14px",
+    background: "#f8fafc",
+    color: "#475569",
+    textAlign: "left",
+    fontSize: "13px",
+    fontWeight: "600",
+    letterSpacing: "0.3px",
+  },
+
+  td: {
+    padding: "12px",
+    borderTop: "1px solid #f1f5f9",
+    fontSize: "14px",
+  },
+
+  /* ACTION BUTTONS */
   editBtn: {
     background: "#facc15",
-    marginRight: "5px",
+    marginRight: "6px",
     border: "none",
-    padding: "5px",
+    padding: "6px 12px",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
 
   deleteBtn: {
     background: "#ef4444",
     border: "none",
-    padding: "5px",
+    padding: "6px 12px",
+    borderRadius: "6px",
     color: "white",
+    cursor: "pointer",
   },
-  backBtn: {
-  marginTop: "10px",
-  background: "#1f2937",
-  color: "white",
-  padding: "10px 15px",
-  width: "100%",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
 
-  display: "flex",
-  justifyContent: "flex-start", // 🔥 forces left alignment
-  alignItems: "center",
-  gap: "8px",
-  fontSize:"16px",
-},
+  /* BACK BUTTON */
+  backBtn: {
+    marginTop: "12px",
+    background: "#f1f5f9",
+    color: "#0f172a",
+    padding: "10px 15px",
+    width: "100%",
+    border: "1px solid #e2e8f0",
+    borderRadius: "8px",
+    cursor: "pointer",
+    display: "flex",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "15px",
+  },
 };
