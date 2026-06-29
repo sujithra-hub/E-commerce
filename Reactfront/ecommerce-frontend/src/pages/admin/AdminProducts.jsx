@@ -585,4 +585,12 @@ const styles = {
     fontWeight: "bold",
     zIndex: 9999,
   },
+  preview: {
+  width: "120px",
+  height: "120px",
+  objectFit: "cover",
+  borderRadius: "8px",
+  marginTop: "10px",
+  border: "1px solid #444",
+},
 };

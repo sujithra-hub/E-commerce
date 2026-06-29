@@ -275,16 +275,20 @@ export default AdminOrders;
 const styles = {
   wrapper: {
     display: "flex",
-    minHeight: "100vh",
+    width: "100vw",          // ✅ force full width
+    minHeight: "100vh",      // ✅ full height
     background: "#0f172a",
     color: "white",
     fontFamily: "Arial",
+    overflow: "hidden",      // prevent outer scroll glitches
   },
 
   sidebar: {
     width: "220px",
+    minHeight: "100vh",      // ✅ match full height
     background: "#111827",
     padding: "20px",
+    boxSizing: "border-box",
   },
 
   item: {
@@ -306,6 +310,8 @@ const styles = {
   main: {
     flex: 1,
     padding: "30px",
+    overflow: "auto",        // ✅ allow scrolling inside main
+    boxSizing: "border-box",
   },
 
   cardGrid: {
@@ -314,15 +320,22 @@ const styles = {
     flexWrap: "wrap",
   },
 
-  cardBlue: { background: "#2563eb", padding: "20px", borderRadius: "10px", flex: 1 },
-  cardYellow: { background: "#eab308", padding: "20px", borderRadius: "10px", flex: 1 },
-  cardPurple: { background: "#a855f7", padding: "20px", borderRadius: "10px", flex: 1 },
-  cardOrange: { background: "#f97316", padding: "20px", borderRadius: "10px", flex: 1 },
-  cardGreen: { background: "#16a34a", padding: "20px", borderRadius: "10px", flex: 1 },
+  cardBlue: { background: "#2563eb", padding: "20px", borderRadius: "10px", flex: "1 1 200px" },
+  cardYellow: { background: "#eab308", padding: "20px", borderRadius: "10px", flex: "1 1 200px" },
+  cardPurple: { background: "#a855f7", padding: "20px", borderRadius: "10px", flex: "1 1 200px" },
+  cardOrange: { background: "#f97316", padding: "20px", borderRadius: "10px", flex: "1 1 200px" },
+  cardGreen: { background: "#16a34a", padding: "20px", borderRadius: "10px", flex: "1 1 200px" },
+
+  /* ✅ FIXED TABLE SYSTEM */
+  tableWrapper: {
+    width: "100%",
+    overflowX: "auto",       // horizontal scroll only here
+    marginTop: "20px",
+  },
 
   table: {
     width: "100%",
-    marginTop: "15px",
+    minWidth: "1100px",      // ensures scroll instead of breaking
     borderCollapse: "collapse",
     background: "#1e293b",
     textAlign: "center",
@@ -331,10 +344,13 @@ const styles = {
   th: {
     padding: "12px",
     background: "#334155",
+    whiteSpace: "nowrap",
   },
 
   td: {
     padding: "12px",
+    borderBottom: "1px solid #334155",
+    whiteSpace: "nowrap",
   },
 
   status: {
@@ -349,6 +365,7 @@ const styles = {
     border: "none",
     padding: "6px",
     cursor: "pointer",
+    borderRadius: "5px",
   },
 
   shipBtn: {
@@ -357,6 +374,7 @@ const styles = {
     border: "none",
     padding: "6px",
     cursor: "pointer",
+    borderRadius: "5px",
   },
 
   outBtn: {
@@ -365,6 +383,7 @@ const styles = {
     border: "none",
     padding: "6px",
     cursor: "pointer",
+    borderRadius: "5px",
   },
 
   deliverBtn: {
@@ -372,6 +391,7 @@ const styles = {
     border: "none",
     padding: "6px",
     cursor: "pointer",
+    borderRadius: "5px",
   },
 
   popup: {
