@@ -1,177 +1,35 @@
-import React, { useState } from "react";
+﻿import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { notifyAuthChange } from "../../utils/auth";
 
 const UserLogin = () => {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [notice, setNotice] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!form.email || !form.password) {
-      alert("Please fill all fields");
-      return;
-    }
-
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!form.email || !form.password) return setNotice("Please fill all fields.");
     try {
-      const res = await axios.post(
-        "http://localhost:8080/api/auth/login",
-        form
-      );
-
-      console.log("LOGIN RESPONSE:", res.data);
-
-      // -------------------------------
-      // GET TOKEN
-      // -------------------------------
+      const res = await axios.post("http://localhost:8080/api/auth/login", form);
       const token = res.data?.token || res.data;
-
-      if (!token) {
-        alert("Login failed: No token received");
-        return;
-      }
-
-      // -------------------------------
-      // DECODE JWT SAFELY
-      // -------------------------------
-      let payload = {};
-      let role = null;
+      if (!token) return setNotice("Login failed: no token received.");
+      let role = "user";
       let userId = null;
-
-      try {
-        payload = JSON.parse(atob(token.split(".")[1]));
-
-        role = payload.role || "user"; // ✅ default user
-        userId = payload.userId || payload.id || null;
-      } catch (err) {
-        console.log("JWT decode failed:", err);
-        role = "user"; // fallback safety
-      }
-
-      // -------------------------------
-      // FORCE USER LOGIN ONLY
-      // -------------------------------
-      if (role && role.toLowerCase() !== "user") {
-        alert("Access denied: Only users allowed here");
-        return;
-      }
-
-      // -------------------------------
-      // STORE DATA
-      // -------------------------------
+      try { const payload = JSON.parse(atob(token.split(".")[1])); role = payload.role || "user"; userId = payload.userId || payload.id || null; } catch {}
+      if (role.toLowerCase() !== "user") return setNotice("Access denied: only users allowed here.");
       localStorage.setItem("token", token);
-      localStorage.setItem("role", "user"); // ✅ IMPORTANT FIX
-
+      localStorage.setItem("role", "user");
       if (userId) localStorage.setItem("userId", userId);
-
-      alert("User login successful");
-
-      navigate("/Home");
-    } catch (err) {
-      console.log("LOGIN ERROR:", err);
-      alert("Login failed. Check backend or credentials.");
-    }
+      notifyAuthChange();
+      navigate("/Home", { replace: true });
+    } catch (err) { console.log(err); setNotice("Login failed. Check backend or credentials."); }
   };
 
-  return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.card}>
-        <h2 style={styles.title}>User Login</h2>
-
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          style={styles.input}
-        />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          style={styles.input}
-        />
-
-        <button type="submit" style={styles.button}>
-          Login
-        </button>
-
-        <p style={{ marginTop: "15px", textAlign: "center" }}>
-          Don't have an account?
-        </p>
-
-        <button
-          type="button"
-          style={styles.registerBtn}
-          onClick={() => navigate("/register")}
-        >
-          Register Here
-        </button>
-      </form>
-    </div>
-  );
+  return <AuthShell title="User Login" subtitle="Sign in to continue shopping." notice={notice}><form onSubmit={handleSubmit} className="grid gap-sm"><Field type="email" name="email" placeholder="Email" value={form.email} onChange={(e)=>setForm({...form,email:e.target.value})}/><Field type="password" name="password" placeholder="Password" value={form.password} onChange={(e)=>setForm({...form,password:e.target.value})}/><button className="rounded-lg bg-gradient-to-b from-primary-container to-primary px-md py-sm font-label-md text-label-md text-on-primary shadow-sm">Login</button><button type="button" onClick={()=>navigate('/register')} className="rounded-lg border border-outline-variant px-md py-sm font-label-md text-label-md text-primary">Register Here</button></form></AuthShell>;
 };
 
+const AuthShell = ({ title, subtitle, notice, children }) => <main className="grid min-h-screen place-items-center bg-background px-margin-mobile py-lg"><section className="w-full max-w-md rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-lg"><span className="font-label-md text-label-md uppercase text-primary">Lumina Commerce</span><h1 className="mt-xs font-headline-md text-headline-md text-on-surface">{title}</h1><p className="mt-xs font-body-md text-body-md text-on-surface-variant">{subtitle}</p>{notice && <div className="my-sm rounded-lg bg-error-container px-sm py-xs text-on-error-container">{notice}</div>}<div className="mt-md">{children}</div></section></main>;
+const Field = (props) => <input {...props} className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />;
 export default UserLogin;
-
-/* ================= STYLES ================= */
-
-const styles = {
-  container: {
-    height: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f5f5f5",
-  },
-
-  card: {
-    padding: "30px",
-    background: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 0 10px rgba(0,0,0,0.1)",
-    width: "300px",
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  title: {
-    marginBottom: "20px",
-    textAlign: "center",
-  },
-
-  input: {
-    marginBottom: "15px",
-    padding: "10px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  },
-
-  button: {
-    padding: "10px",
-    border: "none",
-    borderRadius: "5px",
-    background: "#007bff",
-    color: "#fff",
-    cursor: "pointer",
-  },
-
-  registerBtn: {
-    marginTop: "10px",
-    padding: "10px",
-    border: "none",
-    borderRadius: "5px",
-    background: "#28a745",
-    color: "#fff",
-    cursor: "pointer",
-  },
-};

@@ -1,12 +1,12 @@
-import AdminNavbar from "./AdminNavbar";
+﻿import AdminNavbar from "./AdminNavbar";
 
 const AdminLayout = ({ children }) => {
   return (
-    <div>
+    <div className="min-h-screen bg-background text-on-surface">
       <AdminNavbar />
-      <div style={{ padding: "20px" }}>
+      <main className="mx-auto max-w-[1440px] px-margin-mobile py-lg pt-28 md:px-margin-desktop">
         {children}
-      </div>
+      </main>
     </div>
   );
 };

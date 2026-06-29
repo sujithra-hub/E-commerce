@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 const BASE_URL = "http://localhost:8080";
@@ -9,368 +9,166 @@ const getImageUrl = (img) => {
   return `${BASE_URL}/uploads/${img}`;
 };
 
-const Profile = () => {
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: "",
-    address: "",
-    city: "",
-    country: "",
-    profileImage: ""
-  });
+const emptyProfile = { name: "", email: "", phone: "", role: "", address: "", city: "", country: "", profileImage: "" };
 
+const Profile = () => {
+  const [profile, setProfile] = useState(emptyProfile);
   const [imageUrl, setImageUrl] = useState("/default-avatar.png");
   const [file, setFile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-
-  const [passwordData, setPasswordData] = useState({
-    oldPassword: "",
-    newPassword: ""
-  });
-
+  const [passwordData, setPasswordData] = useState({ oldPassword: "", newPassword: "" });
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useEffect(() => { fetchProfile(); }, []);
+
+  const showMessage = (text, isError = false) => {
+    setMessage(isError ? "" : text);
+    setError(isError ? text : "");
+    setTimeout(() => { setMessage(""); setError(""); }, 2600);
+  };
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/user/profile`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      setProfile(res.data);
+      const res = await axios.get(`${BASE_URL}/api/user/profile`, { headers: { Authorization: `Bearer ${token}` } });
+      setProfile({ ...emptyProfile, ...res.data });
       setImageUrl(getImageUrl(res.data.profileImage) + "?t=" + Date.now());
-
     } catch {
-      setError("Failed to load profile");
+      showMessage("Failed to load profile.", true);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    setProfile(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+  const handleChange = (event) => {
+    setProfile((prev) => ({ ...prev, [event.target.name]: event.target.value }));
   };
 
   const updateProfile = async () => {
     try {
-      const res = await axios.put(
-        `${BASE_URL}/api/user/profile`,
-        profile,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setProfile(res.data);
+      const res = await axios.put(`${BASE_URL}/api/user/profile`, profile, { headers: { Authorization: `Bearer ${token}` } });
+      setProfile({ ...emptyProfile, ...res.data });
       setEditMode(false);
-      setMessage("Profile updated");
-      setError("");
-
+      showMessage("Profile updated.");
     } catch {
-      setError("Update failed");
+      showMessage("Update failed.", true);
     }
   };
 
   const updatePassword = async () => {
     if (!passwordData.oldPassword || !passwordData.newPassword) {
-      setError("Enter both passwords");
+      showMessage("Enter both passwords.", true);
       return;
     }
 
     try {
-      await axios.put(
-        `${BASE_URL}/api/user/change-password`,
-        passwordData,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      await axios.put(`${BASE_URL}/api/user/change-password`, passwordData, { headers: { Authorization: `Bearer ${token}` } });
       setPasswordData({ oldPassword: "", newPassword: "" });
-      setMessage("Password updated");
-      setError("");
-
+      showMessage("Password updated.");
     } catch {
-      setError("Password update failed");
+      showMessage("Password update failed.", true);
     }
   };
 
-  const handleFileChange = (e) => {
-    const selected = e.target.files[0];
-    setFile(selected);
+  const handleFileChange = (event) => {
+    const selected = event.target.files[0];
+    setFile(selected || null);
     if (selected) setImageUrl(URL.createObjectURL(selected));
   };
 
   const uploadImage = async () => {
     if (!file) return;
-
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      const res = await axios.post(
-        `${BASE_URL}/api/user/upload-image`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data"
-          }
-        }
-      );
-
+      const res = await axios.post(`${BASE_URL}/api/user/upload-image`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+      });
       const img = res.data;
-
-      setProfile(prev => ({ ...prev, profileImage: img }));
+      setProfile((prev) => ({ ...prev, profileImage: img }));
       setImageUrl(getImageUrl(img) + "?t=" + Date.now());
       setFile(null);
-
-      setMessage("Image uploaded");
-      setError("");
-
+      showMessage("Image uploaded.");
     } catch {
-      setError("Upload failed");
+      showMessage("Upload failed.", true);
     }
   };
 
-  if (loading) return <h3 style={{ textAlign: "center" }}>Loading...</h3>;
+  if (loading) {
+    return <main className="min-h-screen bg-background px-margin-mobile py-lg pt-28 md:px-margin-desktop"><Panel>Loading profile...</Panel></main>;
+  }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
+    <main className="min-h-screen bg-background px-margin-mobile py-lg pt-28 md:px-margin-desktop">
+      {(message || error) && <div className={`fixed right-4 top-24 z-[100] rounded-lg px-4 py-3 font-body-sm text-body-sm shadow-lg ${error ? "bg-error text-on-error" : "bg-inverse-surface text-inverse-on-surface"}`}>{message || error}</div>}
 
-        <h2 style={styles.title}>My Profile</h2>
-
-        {message && <div style={styles.success}>{message}</div>}
-        {error && <div style={styles.error}>{error}</div>}
-
-        {/* IMAGE */}
-        <div style={styles.imageSection}>
-          <div style={styles.imageWrapper}>
-            <img src={imageUrl} alt="profile" style={styles.image} />
-
-            <label style={styles.overlayBtn}>
-              📷
+      <section className="mx-auto grid max-w-[1440px] gap-md lg:grid-cols-[360px_1fr]">
+        <aside className="h-fit rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md text-center shadow-sm">
+          <div className="mx-auto h-32 w-32 overflow-hidden rounded-full border-4 border-primary-fixed bg-surface-container-low">
+            <img src={imageUrl} alt="Profile" className="h-full w-full object-cover" />
+          </div>
+          <h1 className="mt-md font-headline-sm text-headline-sm text-on-surface">{profile.name || "Customer"}</h1>
+          <p className="mt-xs font-body-sm text-body-sm text-on-surface-variant">{profile.email}</p>
+          <div className="mt-md flex flex-col gap-sm">
+            <label className="flex cursor-pointer items-center justify-center gap-xs rounded-lg border border-outline-variant bg-surface px-md py-sm font-label-md text-label-md text-primary transition hover:bg-surface-container-low">
+              <span className="material-symbols-outlined">photo_camera</span>
+              Choose Image
               <input type="file" hidden onChange={handleFileChange} />
             </label>
+            <button type="button" onClick={uploadImage} disabled={!file} className="rounded-lg bg-gradient-to-b from-primary-container to-primary px-md py-sm font-label-md text-label-md text-on-primary shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">Upload Image</button>
           </div>
+        </aside>
 
-          <button
-            style={styles.uploadBtn}
-            onClick={uploadImage}
-            disabled={!file}
-          >
-            Upload
-          </button>
+        <div className="space-y-md">
+          <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-sm">
+            <div className="mb-md flex flex-col gap-sm sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span className="font-label-md text-label-md uppercase text-primary">Account</span>
+                <h2 className="mt-xs font-headline-md text-headline-md text-on-surface">Profile Details</h2>
+              </div>
+              {!editMode ? (
+                <button type="button" onClick={() => setEditMode(true)} className="rounded-lg bg-primary px-md py-sm font-label-md text-label-md text-on-primary">Edit Profile</button>
+              ) : (
+                <div className="flex gap-sm">
+                  <button type="button" onClick={updateProfile} className="rounded-lg bg-primary px-md py-sm font-label-md text-label-md text-on-primary">Save</button>
+                  <button type="button" onClick={() => setEditMode(false)} className="rounded-lg border border-outline-variant px-md py-sm font-label-md text-label-md text-secondary">Cancel</button>
+                </div>
+              )}
+            </div>
+            <div className="grid gap-sm sm:grid-cols-2">
+              <Input label="Name" name="name" value={profile.name} onChange={handleChange} disabled={!editMode} />
+              <Input label="Email" value={profile.email} disabled />
+              <Input label="Phone" name="phone" value={profile.phone} onChange={handleChange} disabled={!editMode} />
+              <Input label="City" name="city" value={profile.city} onChange={handleChange} disabled={!editMode} />
+              <Input label="Country" name="country" value={profile.country} onChange={handleChange} disabled={!editMode} />
+              <Input label="Address" name="address" value={profile.address} onChange={handleChange} disabled={!editMode} />
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-sm">
+            <h2 className="font-headline-sm text-headline-sm text-on-surface">Change Password</h2>
+            <div className="mt-md grid gap-sm sm:grid-cols-[1fr_1fr_auto]">
+              <input type="password" placeholder="Old Password" value={passwordData.oldPassword} onChange={(event) => setPasswordData((prev) => ({ ...prev, oldPassword: event.target.value }))} className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm font-body-md text-body-md text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+              <input type="password" placeholder="New Password" value={passwordData.newPassword} onChange={(event) => setPasswordData((prev) => ({ ...prev, newPassword: event.target.value }))} className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm font-body-md text-body-md text-on-surface outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+              <button type="button" onClick={updatePassword} className="rounded-lg bg-gradient-to-b from-primary-container to-primary px-md py-sm font-label-md text-label-md text-on-primary shadow-sm">Update</button>
+            </div>
+          </section>
         </div>
-
-        {/* FORM */}
-        <div style={styles.form}>
-          <Input label="Name" name="name" value={profile.name} onChange={handleChange} disabled={!editMode} />
-          <Input label="Email" value={profile.email} disabled />
-          <Input label="Phone" name="phone" value={profile.phone} onChange={handleChange} disabled={!editMode} />
-          <Input label="Address" name="address" value={profile.address} onChange={handleChange} disabled={!editMode} />
-          <Input label="City" name="city" value={profile.city} onChange={handleChange} disabled={!editMode} />
-          <Input label="Country" name="country" value={profile.country} onChange={handleChange} disabled={!editMode} />
-        </div>
-
-        {/* ACTIONS */}
-        <div style={styles.actions}>
-          {!editMode ? (
-            <button style={styles.primaryBtn} onClick={() => setEditMode(true)}>
-              Edit Profile
-            </button>
-          ) : (
-            <>
-              <button style={styles.primaryBtn} onClick={updateProfile}>
-                Save
-              </button>
-              <button style={styles.cancelBtn} onClick={() => setEditMode(false)}>
-                Cancel
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* PASSWORD */}
-        <div style={styles.passwordBox}>
-          <h3>Change Password</h3>
-
-          <input
-            type="password"
-            name="oldPassword"
-            placeholder="Old Password"
-            value={passwordData.oldPassword}
-            onChange={(e)=>setPasswordData({...passwordData, oldPassword:e.target.value})}
-            style={styles.input}
-          />
-
-          <input
-            type="password"
-            name="newPassword"
-            placeholder="New Password"
-            value={passwordData.newPassword}
-            onChange={(e)=>setPasswordData({...passwordData, newPassword:e.target.value})}
-            style={styles.input}
-          />
-
-          <button style={styles.primaryBtn} onClick={updatePassword}>
-            Update Password
-          </button>
-        </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 
 const Input = ({ label, value, ...props }) => (
-  <div style={styles.inputRow}>
-    <label style={styles.label}>{label}</label>
-    <input {...props} value={value || ""} style={styles.input} />
-  </div>
+  <label className="grid gap-xs">
+    <span className="font-label-sm text-label-sm uppercase text-secondary">{label}</span>
+    <input {...props} value={value || ""} className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm font-body-md text-body-md text-on-surface outline-none transition disabled:bg-surface-container disabled:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary" />
+  </label>
 );
 
-const styles = {
- page: {
-  background: "#f3f4f6",
-  minHeight: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",   // ✅ ADD THIS
-  padding: "20px"
-},
-
-  card: {
-    width: "420px",
-    background: "#111827", // dark card
-    padding: "60px",
-    borderRadius: "12px",
-    color: "#fff",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
-  },
-
-  title: {
-    textAlign: "center",
-    color: "#ff6a00"
-  },
-
-  imageSection: {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between", // ✅ spreads nicely
-  marginBottom: "20px"
-},
-
-  imageWrapper: {
-    position: "relative",
-    width: "100px",
-    height: "100px",
-    borderRadius: "50%",
-    overflow: "hidden",
-    border: "3px solid #ff6a00"
-  },
-
-  image: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover"
-  },
-
-  overlayBtn: {
-    position: "absolute",
-    bottom: "0",
-    right: "0",
-    background: "#ff6a00",
-    padding: "6px",
-    borderRadius: "50%",
-    cursor: "pointer"
-  },
-
-  uploadBtn: {
-    padding: "8px 14px",
-    background: "#ff6a00",
-    border: "none",
-    color: "#000",
-    cursor: "pointer",
-    borderRadius: "6px"
-  },
-
-  form: {
-  display: "flex",
-  flexDirection: "column",
-  gap: "12px",
-  marginTop: "10px"
-},
-
-  inputRow: {
-  display: "grid",
-  gridTemplateColumns: "120px 1fr",
-  alignItems: "center",
-  gap: "10px"
-},
-
-label: {
-  fontSize: "13px",
-  color: "#aaa",
-  textAlign: "left"
-},
-
-input: {
-  width: "100%",
-  padding: "10px",
-  borderRadius: "6px",
-  border: "1px solid #333",
-  background: "#1f2937",
-  color: "#fff"
-},
-
-  actions: {
-    display: "flex",
-    gap: "10px",
-    marginTop: "15px"
-  },
-
-  primaryBtn: {
-    flex: 1,
-    padding: "10px",
-    background: "#ff6a00",
-    border: "none",
-    color: "#000",
-    cursor: "pointer",
-    borderRadius: "6px"
-  },
-
-  cancelBtn: {
-    flex: 1,
-    padding: "10px",
-    background: "#374151",
-    border: "none",
-    color: "#fff",
-    borderRadius: "6px"
-  },
-
-  passwordBox: {
-    marginTop: "20px"
-  },
-
-  success: {
-    color: "#22c55e",
-    textAlign: "center"
-  },
-
-  error: {
-    color: "#ef4444",
-    textAlign: "center"
-  }
-};
+const Panel = ({ children }) => <div className="mx-auto max-w-[720px] rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-lg text-center font-body-lg text-body-lg text-on-surface-variant shadow-sm">{children}</div>;
 
 export default Profile;

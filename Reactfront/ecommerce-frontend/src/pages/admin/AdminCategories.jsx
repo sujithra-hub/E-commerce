@@ -1,445 +1,126 @@
-import React, { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
 const AdminCategories = () => {
   const [view, setView] = useState("dashboard");
   const [categories, setCategories] = useState([]);
+  const [myCategories, setMyCategories] = useState([]);
   const [editId, setEditId] = useState(null);
-
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-  });
-
+  const [notice, setNotice] = useState("");
+  const [form, setForm] = useState({ name: "", description: "" });
   const token = localStorage.getItem("token");
 
-  // ================= GET USER ID FROM TOKEN (LIKE PRODUCTS) =================
-  let userId = null;
-  if (token) {
+  const loggedInId = (() => {
     try {
       const decoded = jwtDecode(token);
-      userId = decoded.userId || decoded.id;
-    } catch (err) {
-      console.log("Invalid token");
+      return decoded.userId || decoded.adminId || decoded.id || decoded.sub;
+    } catch {
+      return null;
     }
-  }
+  })();
 
-  const getAuthHeaders = () => ({
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const getAuthHeaders = () => ({ headers: { Authorization: `Bearer ${token}` } });
 
-  // ================= FETCH =================
+  useEffect(() => { fetchCategories(); }, []);
+
   const fetchCategories = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:8080/api/admin/categories",
-        getAuthHeaders()
-      );
-      setCategories(res.data);
+      const allRes = await axios.get("http://localhost:8080/api/admin/categories", getAuthHeaders());
+      setCategories(allRes.data || []);
+
+      if (loggedInId) {
+        const mineRes = await axios.get(`http://localhost:8080/api/admin/categories/admin/${loggedInId}`, getAuthHeaders());
+        setMyCategories(mineRes.data || []);
+      }
     } catch (err) {
       console.log(err);
+      show("Could not load categories.");
     }
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const ownerIdOf = (category) => {
+    const owner = category.createdBy || category.user || category.admin || category.seller || category.createdById || category.adminId || category.userId;
+    return typeof owner === "object" ? owner?.id || owner?.userId || owner?.adminId : owner;
+  };
 
-  // ================= SAVE (CREATE / UPDATE) =================
   const handleSubmit = async () => {
     try {
-      const payload = {
-        name: form.name,
-        description: form.description,
-        createdBy: userId, // 🔥 THIS WILL GO TO DB
-      };
-
-      if (editId) {
-        await axios.put(
-          `http://localhost:8080/api/admin/categories/${editId}`,
-          payload,
-          getAuthHeaders()
-        );
-      } else {
-        await axios.post(
-          "http://localhost:8080/api/admin/categories",
-          payload,
-          getAuthHeaders()
-        );
-      }
-
+      const payload = { name: form.name, description: form.description };
+      if (editId) await axios.put(`http://localhost:8080/api/admin/categories/${editId}`, payload, getAuthHeaders());
+      else await axios.post("http://localhost:8080/api/admin/categories", payload, getAuthHeaders());
       resetForm();
-      fetchCategories();
-      setView("dashboard");
+      await fetchCategories();
+      setView("list");
+      show("Category saved for logged-in admin.");
     } catch (err) {
       console.log(err);
+      show("Could not save category.");
     }
   };
 
-  // ================= DELETE =================
-  const deleteCategory = async (id) => {
-    await axios.delete(
-      `http://localhost:8080/api/admin/categories/${id}`,
-      getAuthHeaders()
-    );
+  const deleteCategory = async (category) => {
+    if (!myCategories.some((item) => item.id === category.id)) return show("You can only delete your own categories.");
+    await axios.delete(`http://localhost:8080/api/admin/categories/${category.id}`, getAuthHeaders());
     fetchCategories();
+    show("Category deleted.");
   };
 
-  // ================= EDIT =================
-  const editCategory = (cat) => {
-    setForm({
-      name: cat.name,
-      description: cat.description,
-    });
-    setEditId(cat.id);
+  const editCategory = (category) => {
+    if (!myCategories.some((item) => item.id === category.id)) return show("You can only edit your own categories.");
+    setForm({ name: category.name || "", description: category.description || "" });
+    setEditId(category.id);
     setView("form");
   };
 
-  // ================= RESET =================
-  const resetForm = () => {
-    setForm({ name: "", description: "" });
-    setEditId(null);
-  };
-
-  // ================= FILTER MY CATEGORIES =================
-  const myCategories = categories.filter((c) => {
-  const createdBy = c.createdBy;
-
-  if (!createdBy || !userId) return false;
-
-  // if backend sends object or id both handled
-  if (typeof createdBy === "object") {
-    return String(createdBy.id) === String(userId);
-  }
-
-  return String(createdBy) === String(userId);
-});
+  const resetForm = () => { setForm({ name: "", description: "" }); setEditId(null); };
+  const show = (text) => { setNotice(text); setTimeout(() => setNotice(""), 2200); };
 
   return (
-    <div style={styles.wrapper}>
-      {/* SIDEBAR */}
-      <div style={styles.sidebar}>
-        <h2>📦 Admin Categories</h2>
+    <div className="space-y-md">
+      {notice && <Toast>{notice}</Toast>}
+      <PageHeader title="Category Management" subtitle={`Logged-in admin id: ${loggedInId || "not found"}. All categories are read-only; only your categories can be edited or deleted.`} />
+      <Tabs view={view} setView={setView} items={[["dashboard", "Dashboard"], ["form", editId ? "Edit Category" : "Add Category"], ["list", "View Categories"]]} />
 
-        <div onClick={() => setView("dashboard")} style={styles.item}>
-          📊 Dashboard
+      {view === "dashboard" && (
+        <div className="grid gap-md sm:grid-cols-2">
+          <Metric label="All Categories" value={categories.length} />
+          <Metric label="My Categories" value={myCategories.length} />
         </div>
+      )}
 
-        <div onClick={() => setView("form")} style={styles.item}>
-          ➕ Add Category
-        </div>
-
-        <div onClick={() => setView("list")} style={styles.item}>
-          📋 View Categories
-        </div>
-
-        <button onClick={() => setView("dashboard")} style={styles.backBtn}>
-          ⬅ Back
-        </button>
-      </div>
-
-      {/* MAIN */}
-      <div style={styles.main}>
-        <h1>Category Management</h1>
-
-        {/* DASHBOARD */}
-        {view === "dashboard" && (
-          <div style={styles.cardGrid}>
-            <div style={styles.cardBlue}>
-              <h2>{categories.length}</h2>
-              <p>Total Categories</p>
-            </div>
-
-            <div style={styles.cardGreen}>
-              <h2>{myCategories.length}</h2>
-              <p>My Categories</p>
+      {view === "form" && (
+        <section className="max-w-2xl rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-sm">
+          <h2 className="font-headline-sm text-headline-sm text-on-surface">{editId ? "Update Category" : "Create Category"}</h2>
+          <p className="mt-xs font-body-sm text-body-sm text-on-surface-variant">The backend assigns this category to the currently logged-in admin.</p>
+          <div className="mt-md grid gap-sm">
+            <Input placeholder="Category Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+            <textarea placeholder="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="min-h-28 rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
+            <div className="flex gap-sm">
+              <Primary onClick={handleSubmit}>{editId ? "Update" : "Save"}</Primary>
+              <Secondary onClick={resetForm}>Reset</Secondary>
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* FORM */}
-        {view === "form" && (
-          <div style={styles.formBox}>
-            <h2>{editId ? "Update Category" : "Create Category"}</h2>
-
-            <input
-              style={styles.input}
-              placeholder="Category Name"
-              value={form.name}
-              onChange={(e) =>
-                setForm({ ...form, name: e.target.value })
-              }
-            />
-
-            <textarea
-              style={styles.input}
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-
-            <button style={styles.saveBtn} onClick={handleSubmit}>
-              {editId ? "Update" : "Save"}
-            </button>
-
-            <button style={styles.cancelBtn} onClick={resetForm}>
-              Reset
-            </button>
-          </div>
-        )}
-
-        {/* LIST */}
-        {view === "list" && (
-          <>
-            <h2>All Categories</h2>
-
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {categories.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.id}</td>
-                    <td>{c.name}</td>
-                    <td>{c.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2 style={{ marginTop: 30 }}>My Categories</h2>
-
-            <table style={styles.table}>
-              <tbody>
-                {myCategories.map((c) => (
-                  <tr key={c.id}>
-                    <td>{c.name}</td>
-                    <td>{c.description}</td>
-                    <td>
-                      <button onClick={() => editCategory(c)}>Edit</button>
-                      <button onClick={() => deleteCategory(c.id)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
-      </div>
+      {view === "list" && (
+        <div className="space-y-md">
+          <Table title="All Categories" headers={["ID", "Name", "Description", "Owner"]} rows={categories.map((category) => [category.id, category.name, category.description || "-", ownerIdOf(category) || "-"])} empty="No categories found." />
+          <Table title="My Categories" headers={["ID", "Name", "Description", "Actions"]} rows={myCategories.map((category) => [category.id, category.name, category.description || "-", <div className="flex gap-xs" key={category.id}><Secondary onClick={() => editCategory(category)}>Edit</Secondary><Danger onClick={() => deleteCategory(category)}>Delete</Danger></div>])} empty="You have not added categories with this logged-in admin yet." />
+        </div>
+      )}
     </div>
   );
 };
 
+const PageHeader = ({ title, subtitle }) => <div><span className="font-label-md text-label-md uppercase text-primary">Admin</span><h1 className="mt-xs font-headline-md text-headline-md text-on-surface">{title}</h1><p className="mt-xs font-body-md text-body-md text-on-surface-variant">{subtitle}</p></div>;
+const Tabs = ({ view, setView, items }) => <div className="flex flex-wrap gap-xs border-b border-outline-variant/30">{items.map(([id, label]) => <button key={id} onClick={() => setView(id)} className={`px-md py-sm font-label-md text-label-md ${view === id ? "border-b-2 border-primary text-primary" : "text-secondary hover:text-primary"}`}>{label}</button>)}</div>;
+const Metric = ({ label, value }) => <section className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-sm"><span className="font-label-md text-label-md uppercase text-secondary">{label}</span><p className="mt-sm font-display-lg-mobile text-primary">{value}</p></section>;
+const Input = (props) => <input {...props} className="rounded-lg border border-outline-variant bg-surface-container-low px-sm py-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary" />;
+const Primary = ({ children, ...props }) => <button {...props} className="rounded-lg bg-primary px-md py-sm font-label-md text-label-md text-on-primary">{children}</button>;
+const Secondary = ({ children, ...props }) => <button {...props} className="rounded-lg border border-outline-variant px-sm py-xs font-label-sm text-label-sm text-secondary hover:text-primary">{children}</button>;
+const Danger = ({ children, ...props }) => <button {...props} className="rounded-lg bg-error/10 px-sm py-xs font-label-sm text-label-sm text-error hover:bg-error hover:text-white">{children}</button>;
+const Toast = ({ children }) => <div className="fixed right-4 top-24 z-[100] rounded-lg bg-inverse-surface px-4 py-3 font-body-sm text-body-sm text-inverse-on-surface shadow-lg">{children}</div>;
+const Table = ({ title, headers, rows, empty }) => <section className="overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-lowest shadow-sm"><div className="border-b border-outline-variant/30 p-md"><h2 className="font-headline-sm text-headline-sm text-on-surface">{title}</h2></div><div className="overflow-x-auto"><table className="w-full text-left"><thead className="bg-surface-container-low text-secondary"><tr>{headers.map((header) => <th key={header} className="px-sm py-sm font-label-sm text-label-sm uppercase">{header}</th>)}</tr></thead><tbody className="divide-y divide-outline-variant/20 font-body-sm text-body-sm">{rows.length ? rows.map((row, index) => <tr key={index}>{row.map((cell, cellIndex) => <td key={cellIndex} className="px-sm py-sm text-on-surface-variant">{cell}</td>)}</tr>) : <tr><td colSpan={headers.length} className="px-sm py-lg text-center text-on-surface-variant">{empty}</td></tr>}</tbody></table></div></section>;
 export default AdminCategories;
-
-/* ================= STYLES ================= */
-const styles = {
-  wrapper: {
-    display: "flex",
-    minHeight: "100vh",
-    background: "#f4f6f9", // soft neutral (formal)
-    color: "#1e293b",
-    fontFamily: "Inter, Poppins, sans-serif",
-  },
-
-  /* SIDEBAR */
-  sidebar: {
-    width: "240px",
-    background: "#1e293b", // deep navy (not pure black)
-    padding: "22px",
-    color: "#cbd5e1",
-    borderRight: "1px solid rgba(255,255,255,0.05)",
-  },
-
-  logo: {
-    marginBottom: "35px",
-    fontSize: "20px",
-    fontWeight: "600",
-    color: "#e2e8f0",
-    letterSpacing: "0.5px",
-  },
-
-  item: {
-    padding: "12px 14px",
-    marginBottom: "10px",
-    cursor: "pointer",
-    borderRadius: "10px",
-    background: "transparent",
-    transition: "all 0.25s ease",
-  },
-
-  activeItem: {
-    padding: "12px 14px",
-    marginBottom: "10px",
-    cursor: "pointer",
-    borderRadius: "10px",
-    background: "#1d4ed8", // controlled accent
-    color: "#fff",
-    boxShadow: "0 4px 12px rgba(29,78,216,0.35)",
-  },
-
-  /* MAIN AREA */
-  main: {
-    flex: 1,
-    padding: "30px",
-  },
-
-  title: {
-    marginBottom: "25px",
-    fontSize: "26px",
-    fontWeight: "600",
-    color: "#0f172a",
-  },
-
-  /* KPI CARDS */
-  cardGrid: {
-    display: "flex",
-    gap: "20px",
-    marginBottom: "30px",
-  },
-
-  cardBlue: {
-    background: "#ffffff",
-    padding: "22px",
-    borderRadius: "14px",
-    flex: 1,
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-  },
-
-  cardGreen: {
-    background: "#ffffff",
-    padding: "22px",
-    borderRadius: "14px",
-    flex: 1,
-    border: "1px solid #e2e8f0",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
-  },
-
-  /* FORM SECTION */
-  formBox: {
-    background: "#ffffff",
-    padding: "22px",
-    borderRadius: "14px",
-    maxWidth: "450px",
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.05)",
-  },
-
-  input: {
-    width: "100%",
-    padding: "12px",
-    marginBottom: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    background: "#f9fafb",
-    fontSize: "14px",
-    outline: "none",
-  },
-
-  textarea: {
-    width: "100%",
-    height: "90px",
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #d1d5db",
-    background: "#f9fafb",
-  },
-
-  /* BUTTONS */
-  saveBtn: {
-    background: "#1d4ed8",
-    color: "#fff",
-    padding: "10px 18px",
-    border: "none",
-    marginRight: "10px",
-    cursor: "pointer",
-    borderRadius: "8px",
-    fontWeight: "500",
-    letterSpacing: "0.3px",
-  },
-
-  cancelBtn: {
-    background: "#e2e8f0",
-    color: "#0f172a",
-    padding: "10px 18px",
-    border: "none",
-    cursor: "pointer",
-    borderRadius: "8px",
-  },
-
-  /* TABLE */
-  table: {
-    width: "100%",
-    marginTop: "20px",
-    borderCollapse: "collapse",
-    background: "#ffffff",
-    borderRadius: "12px",
-    overflow: "hidden",
-    border: "1px solid #e5e7eb",
-  },
-
-  th: {
-    padding: "14px",
-    background: "#f8fafc",
-    color: "#475569",
-    textAlign: "left",
-    fontSize: "13px",
-    fontWeight: "600",
-    letterSpacing: "0.3px",
-  },
-
-  td: {
-    padding: "12px",
-    borderTop: "1px solid #f1f5f9",
-    fontSize: "14px",
-  },
-
-  /* ACTION BUTTONS */
-  editBtn: {
-    background: "#facc15",
-    marginRight: "6px",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    cursor: "pointer",
-  },
-
-  deleteBtn: {
-    background: "#ef4444",
-    border: "none",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    color: "white",
-    cursor: "pointer",
-  },
-
-  /* BACK BUTTON */
-  backBtn: {
-    marginTop: "12px",
-    background: "#f1f5f9",
-    color: "#0f172a",
-    padding: "10px 15px",
-    width: "100%",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: "8px",
-    fontSize: "15px",
-  },
-};
