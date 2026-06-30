@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const heroImage = "https://res.cloudinary.com/uogvrgkk/image/upload/v1782740777/growtika-mlpsHpUUCHY-unsplash_culxwk.jpg?auto=format&fit=crop&w=1400&q=80";
 const adminImage = "https://res.cloudinary.com/uogvrgkk/image/upload/v1782740969/deng-xiang--WXQm_NTK0U-unsplash_hj5uoj.jpg?auto=format&fit=crop&w=900&q=80";

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCartItems } from "../services/cartService";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 function Checkout() {
   const [cartItems, setCartItems] = useState([]);
@@ -52,7 +53,7 @@ function Checkout() {
         items: cartItems.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
       };
 
-      await axios.post("http://localhost:8080/api/orders/checkout", orderData, {
+      await axios.post(`${API_BASE_URL}/api/orders/checkout`, orderData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
 

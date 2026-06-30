@@ -1,6 +1,7 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../../config";
 
 const AdminRegister = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ const AdminRegister = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await axios.post("http://localhost:8080/api/auth/admin/register", form);
+      await axios.post(`${API_BASE_URL}/api/auth/admin/register`, form);
       setNotice("Admin registered successfully.");
       setTimeout(() => navigate("/admin/Adminlogin"), 600);
     } catch (error) {

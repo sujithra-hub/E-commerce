@@ -1,7 +1,8 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../../config";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = API_BASE_URL;
 const emptyProfile = { name: "", email: "", phone: "", role: "", address: "", city: "", country: "", profileImage: "" };
 const getImageUrl = (img) => !img ? "/default-avatar.png" : img.startsWith("http") ? img : `${BASE_URL}/uploads/${img}`;
 

@@ -1,6 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../../config";
 
 const AdminProducts = () => {
   const [view, setView] = useState("dashboard");
@@ -18,8 +19,8 @@ const AdminProducts = () => {
 
   useEffect(() => { fetchProducts(); fetchCategories(); }, []);
 
-  const fetchProducts = async () => { try { const res = await axios.get("http://localhost:8080/api/admin/products", getAuthHeaders()); setProducts(res.data || []); } catch (err) { console.log(err); } };
-  const fetchCategories = async () => { try { const res = await axios.get("http://localhost:8080/api/categories", getAuthHeaders()); setCategories(res.data || []); } catch (err) { console.log(err); } };
+  const fetchProducts = async () => { try { const res = await axios.get(`${API_BASE_URL}/api/admin/products`, getAuthHeaders()); setProducts(res.data || []); } catch (err) { console.log(err); } };
+  const fetchCategories = async () => { try { const res = await axios.get(`${API_BASE_URL}/api/categories`, getAuthHeaders()); setCategories(res.data || []); } catch (err) { console.log(err); } };
   const show = (text) => { setNotice(text); setTimeout(() => setNotice(""), 2200); };
 
   const handleImageChange = (event) => {
@@ -35,7 +36,7 @@ const AdminProducts = () => {
     if (!imageFile) return "";
     const formData = new FormData();
     formData.append("file", imageFile);
-    const res = await axios.post("http://localhost:8080/api/admin/products/upload", formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
+    const res = await axios.post(`${API_BASE_URL}/api/admin/products/upload`, formData, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
     return res.data;
   };
 
@@ -44,13 +45,13 @@ const AdminProducts = () => {
       let imageUrl = preview && !imageFile ? preview : "";
       if (imageFile) imageUrl = await uploadImage();
       const payload = { name: form.name, description: form.description, price: parseFloat(form.price), stock: parseInt(form.stock), imageUrl };
-      if (editId) await axios.put(`http://localhost:8080/api/admin/products/${editId}`, payload, getAuthHeaders());
-      else await axios.post(`http://localhost:8080/api/admin/products?categoryId=${form.categoryId}`, payload, getAuthHeaders());
+      if (editId) await axios.put(`${API_BASE_URL}/api/admin/products/${editId}`, payload, getAuthHeaders());
+      else await axios.post(`${API_BASE_URL}/api/admin/products?categoryId=${form.categoryId}`, payload, getAuthHeaders());
       resetForm(); fetchProducts(); setView("list"); show("Product saved.");
     } catch (err) { console.log(err); show("Save failed."); }
   };
 
-  const deleteProduct = async (id) => { await axios.delete(`http://localhost:8080/api/admin/products/${id}`, getAuthHeaders()); fetchProducts(); show("Product deleted."); };
+  const deleteProduct = async (id) => { await axios.delete(`${API_BASE_URL}/api/admin/products/${id}`, getAuthHeaders()); fetchProducts(); show("Product deleted."); };
   const editProduct = (p) => { setForm({ name: p.name || "", description: p.description || "", price: p.price || "", stock: p.stock || "", categoryId: p.category?.id || "" }); setPreview(p.imageUrl); setImageFile(null); setEditId(p.id); setView("form"); };
   const resetForm = () => { setForm({ name: "", description: "", price: "", stock: "", categoryId: "" }); setImageFile(null); setPreview(null); setEditId(null); };
   const myProducts = products.filter((p) => String(p.createdBy?.id || p.createdBy) === String(userId));

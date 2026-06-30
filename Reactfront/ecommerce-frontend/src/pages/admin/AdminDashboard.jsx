@@ -1,6 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../../config";
 
 const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
@@ -33,7 +34,7 @@ const AdminDashboard = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/products", getAuthHeaders());
+      const res = await axios.get(`${API_BASE_URL}/api/products`, getAuthHeaders());
       const mine = (res.data || []).filter((p) => String(p.userId || p.createdBy?.id || p.createdBy || p.sellerId || p.user?.id || p.adminId) === String(userId));
       setProducts(mine);
       setCategoryCount(new Set(mine.map((p) => p.category?.name || p.category || p.categoryId).filter(Boolean)).size);
@@ -44,7 +45,7 @@ const AdminDashboard = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/admin/orders", getAuthHeaders());
+      const res = await axios.get(`${API_BASE_URL}/api/admin/orders`, getAuthHeaders());
       const ids = products.map((p) => String(p.id));
       const mine = (res.data || []).filter((order) => (order.items || order.orderItems || []).some((item) => ids.includes(String(item.productId || item.product?.id))));
       setOrders(mine);

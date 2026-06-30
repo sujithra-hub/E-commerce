@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import ProductReviews from "../components/ProductReviews";
+import { API_BASE_URL } from "../config";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = API_BASE_URL;
 
 const categoryTiles = [
   {

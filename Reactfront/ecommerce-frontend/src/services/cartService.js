@@ -1,6 +1,7 @@
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
-const BASE_URL = "http://localhost:8080/api/cart";
+const BASE_URL = `${API_BASE_URL}/api/cart`;
 
 // 🔥 GET TOKEN
 const getToken = () => localStorage.getItem("token");

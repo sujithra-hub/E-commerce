@@ -1,11 +1,12 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getWishlistAPI, removeWishlistAPI } from "../services/wishlistService";
 import { getProducts } from "../services/productService";
 import { addToCart } from "../services/cartService";
 import noImage from "../assets/no-image.png";
+import { API_BASE_URL } from "../config";
 
-const BASE_URL = "http://localhost:8080";
+const BASE_URL = API_BASE_URL;
 
 const getImage = (img) => {
   if (!img || typeof img !== "string" || img.trim() === "") return noImage;

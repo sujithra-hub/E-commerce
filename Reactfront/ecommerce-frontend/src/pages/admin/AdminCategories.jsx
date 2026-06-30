@@ -1,6 +1,7 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../../config";
 
 const AdminCategories = () => {
   const [view, setView] = useState("dashboard");
@@ -26,11 +27,11 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const allRes = await axios.get("http://localhost:8080/api/admin/categories", getAuthHeaders());
+      const allRes = await axios.get(`${API_BASE_URL}/api/admin/categories`, getAuthHeaders());
       setCategories(allRes.data || []);
 
       if (loggedInId) {
-        const mineRes = await axios.get(`http://localhost:8080/api/admin/categories/admin/${loggedInId}`, getAuthHeaders());
+        const mineRes = await axios.get(`${API_BASE_URL}/api/admin/categories/admin/${loggedInId}`, getAuthHeaders());
         setMyCategories(mineRes.data || []);
       }
     } catch (err) {
@@ -47,8 +48,8 @@ const AdminCategories = () => {
   const handleSubmit = async () => {
     try {
       const payload = { name: form.name, description: form.description };
-      if (editId) await axios.put(`http://localhost:8080/api/admin/categories/${editId}`, payload, getAuthHeaders());
-      else await axios.post("http://localhost:8080/api/admin/categories", payload, getAuthHeaders());
+      if (editId) await axios.put(`${API_BASE_URL}/api/admin/categories/${editId}`, payload, getAuthHeaders());
+      else await axios.post(`${API_BASE_URL}/api/admin/categories`, payload, getAuthHeaders());
       resetForm();
       await fetchCategories();
       setView("list");
@@ -61,7 +62,7 @@ const AdminCategories = () => {
 
   const deleteCategory = async (category) => {
     if (!myCategories.some((item) => item.id === category.id)) return show("You can only delete your own categories.");
-    await axios.delete(`http://localhost:8080/api/admin/categories/${category.id}`, getAuthHeaders());
+    await axios.delete(`${API_BASE_URL}/api/admin/categories/${category.id}`, getAuthHeaders());
     fetchCategories();
     show("Category deleted.");
   };

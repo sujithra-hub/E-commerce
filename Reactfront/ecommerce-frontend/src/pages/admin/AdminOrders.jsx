@@ -1,6 +1,7 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
+import { API_BASE_URL } from "../../config";
 
 const statuses = ["PENDING", "CONFIRMED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"];
 
@@ -29,8 +30,8 @@ const AdminOrders = () => {
     setLoading(true);
     try {
       const [ordersRes, productsRes] = await Promise.all([
-        axios.get("http://localhost:8080/api/admin/orders", getAuthHeaders()),
-        axios.get("http://localhost:8080/api/admin/products", getAuthHeaders()),
+        axios.get(`${API_BASE_URL}/api/admin/orders`, getAuthHeaders()),
+        axios.get(`${API_BASE_URL}/api/admin/products`, getAuthHeaders()),
       ]);
       setOrders(ordersRes.data || []);
       setProducts(productsRes.data || []);
@@ -69,7 +70,7 @@ const AdminOrders = () => {
 
   const updateStatus = async (orderId, nextStatus) => {
     try {
-      await axios.put(`http://localhost:8080/api/orders/status/${orderId}?status=${nextStatus}`, {}, getAuthHeaders());
+      await axios.put(`${API_BASE_URL}/api/orders/status/${orderId}?status=${nextStatus}`, {}, getAuthHeaders());
       setOrders((prev) => prev.map((order) => order.id === orderId ? { ...order, status: nextStatus } : order));
       setSelectedOrder((prev) => prev?.id === orderId ? { ...prev, status: nextStatus } : prev);
       show("Order status updated.");

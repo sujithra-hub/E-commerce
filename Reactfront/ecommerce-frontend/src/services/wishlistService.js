@@ -1,7 +1,8 @@
 import axios from "axios";
 import { getUserIdFromToken, getToken } from "../utils/auth";
+import { API_BASE_URL } from "../config";
 
-const BASE_URL = "http://localhost:8080/api/wishlist";
+const BASE_URL = `${API_BASE_URL}/api/wishlist`;
 
 /* HEADER */
 const authHeader = () => {

@@ -1,7 +1,8 @@
 import axios from "axios";
 import { getToken, getUserIdFromToken } from "../utils/auth";
+import { API_BASE_URL } from "../config";
 
-const BASE_URL = "http://localhost:8080/api/reviews";
+const BASE_URL = `${API_BASE_URL}/api/reviews`;
 
 /* ================= AUTH HEADER ================= */
 const authHeader = () => {

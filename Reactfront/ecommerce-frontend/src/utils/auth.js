@@ -1,4 +1,4 @@
-﻿import { jwtDecode } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 export const AUTH_CHANGE_EVENT = "auth-change";
 

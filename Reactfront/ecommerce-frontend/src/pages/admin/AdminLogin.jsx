@@ -1,7 +1,8 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { notifyAuthChange } from "../../utils/auth";
+import { API_BASE_URL } from "../../config";
 
 const AdminLogin = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -12,7 +13,7 @@ const AdminLogin = () => {
     event.preventDefault();
     if (!form.email || !form.password) return setNotice("Please fill all fields.");
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/login", form);
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, form);
       const token = res.data?.token || res.data;
       if (!token) return setNotice("Login failed: no token received.");
       let role = "admin";
