@@ -27,4 +27,16 @@ public class CloudinaryService {
             throw new RuntimeException("Image upload failed: " + e.getMessage());
         }
     }
+
+    public String uploadImage(java.io.File file) {
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                    file,
+                    ObjectUtils.emptyMap()
+            );
+            return uploadResult.get("secure_url").toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Local file upload failed: " + e.getMessage());
+        }
+    }
 }

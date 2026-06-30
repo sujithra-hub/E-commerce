@@ -97,4 +97,36 @@ public ResponseEntity<?> addProduct(
         String imageUrl = cloudinaryService.uploadImage(file);
         return ResponseEntity.ok(imageUrl);
     }
+
+    // =====================
+    // MIGRATE OLD LOCAL IMAGES TO CLOUDINARY
+    // =====================
+    @PostMapping("/migrate-images")
+    public ResponseEntity<String> migrateImages() {
+        List<Product> products = productService.getAllProducts();
+        int migrated = 0;
+        int failed = 0;
+
+        for (Product p : products) {
+            String img = p.getImageUrl();
+            // If the image is not a web URL (Cloudinary usually starts with http)
+            if (img != null && !img.trim().isEmpty() && !img.startsWith("http")) {
+                // It was stored locally in C:/uploads/
+                java.io.File localFile = new java.io.File("C:/uploads/" + img);
+                
+                if (localFile.exists()) {
+                    try {
+                        String newUrl = cloudinaryService.uploadImage(localFile);
+                        productService.updateProductImage(p.getId(), newUrl);
+                        migrated++;
+                    } catch(Exception e) {
+                        failed++;
+                    }
+                } else {
+                    failed++; // File not found on this computer
+                }
+            }
+        }
+        return ResponseEntity.ok("Successfully migrated: " + migrated + " images. Failed or not found: " + failed);
+    }
 }
