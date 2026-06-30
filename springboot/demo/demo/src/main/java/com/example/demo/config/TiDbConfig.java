@@ -14,7 +14,13 @@ public class TiDbConfig {
             try {
                 jdbcTemplate.execute("ALTER TABLE order_table AUTO_ID_CACHE = 1");
                 jdbcTemplate.execute("ALTER TABLE order_item AUTO_ID_CACHE = 1");
-                System.out.println("✅ TiDB AUTO_ID_CACHE set to 1 for consecutive order IDs!");
+                jdbcTemplate.execute("ALTER TABLE users AUTO_ID_CACHE = 1");
+                jdbcTemplate.execute("ALTER TABLE category AUTO_ID_CACHE = 1");
+                jdbcTemplate.execute("ALTER TABLE product AUTO_ID_CACHE = 1");
+                jdbcTemplate.execute("ALTER TABLE cart_item AUTO_ID_CACHE = 1");
+                jdbcTemplate.execute("ALTER TABLE review AUTO_ID_CACHE = 1");
+                jdbcTemplate.execute("ALTER TABLE wishlist AUTO_ID_CACHE = 1");
+                System.out.println("✅ TiDB AUTO_ID_CACHE set to 1 for consecutive IDs on all tables!");
             } catch (Exception e) {
                 System.out.println("⚠️ Could not alter table for TiDB AUTO_ID_CACHE: " + e.getMessage());
             }
