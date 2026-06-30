@@ -2,8 +2,7 @@ services:
   - type: web
     name: ecommerce-backend
     runtime: docker
-    rootDir: springboot/demo/demo
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./springboot/demo/demo/Dockerfile
     envVars:
       - key: SPRING_DATASOURCE_URL
         value: jdbc:mysql://gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com:4000/test?useSSL=true&requireSSL=true&serverTimezone=UTC&enabledTLSProtocols=TLSv1.2%2CTLSv1.3
