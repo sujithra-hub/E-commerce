@@ -50,12 +50,12 @@ export default function OrderHistory() {
           <Panel>No orders found.</Panel>
         ) : (
           <div className="grid gap-base">
-            {orders.map((order) => (
+            {orders.map((order, index) => (
               <article key={order.id} className="rounded-xl border border-outline-variant/30 bg-surface-container-lowest p-md shadow-sm transition hover:shadow-md">
                 <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-sm">
-                      <h2 className="font-headline-sm text-headline-sm text-on-surface">Order #{order.id}</h2>
+                      <h2 className="font-headline-sm text-headline-sm text-on-surface">Order #{index + 1}</h2>
                       <span className={`rounded-full px-sm py-xs font-label-sm text-label-sm ${badgeClass(order.status)}`}>{order.status || "PENDING"}</span>
                     </div>
                     <p className="mt-xs font-body-sm text-body-sm text-on-surface-variant">Payment: {order.paymentMethod || order.paymentStatus || "Not available"}</p>

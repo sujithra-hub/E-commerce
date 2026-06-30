@@ -42,7 +42,7 @@ export default function OrderDetails() {
             <span className="material-symbols-outlined text-base">arrow_back</span>
             Order History
           </button>
-          <h1 className="font-headline-md text-headline-md text-on-surface">Order #{order.id}</h1>
+          <h1 className="font-headline-md text-headline-md text-on-surface">Order Details</h1>
           <p className="mt-xs font-body-md text-body-md text-on-surface-variant">Status: {order.status}</p>
         </div>
         <span className="font-headline-sm text-headline-sm text-primary">Rs. {order.totalAmount || 0}</span>
