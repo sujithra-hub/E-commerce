@@ -44,7 +44,8 @@ public class SecurityConfig {
             "http://localhost:5173",
             "http://localhost:3000",
             "https://*.vercel.app",
-            "https://vercel.app"
+            "https://vercel.app",
+            "https://e-commerce-l54a-psi.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
