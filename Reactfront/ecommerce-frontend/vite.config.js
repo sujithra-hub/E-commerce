@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'E-Commerce App',
-        short_name: 'ShopApp',
-        description: 'Your favorite shopping destination',
+        name: 'Lumina Commerce',
+        short_name: 'Lumina',
+        description: 'The future of premium shopping.',
         theme_color: '#ffffff',
         icons: [
           {
