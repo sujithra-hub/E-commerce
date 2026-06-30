@@ -79,6 +79,7 @@ public class SecurityConfig {
     .requestMatchers("/api/categories/**").permitAll()
     .requestMatchers("/api/products/**").permitAll()
     .requestMatchers("/uploads/**").permitAll()
+    .requestMatchers("/api/migrate/**").permitAll()
 
     // USER ONLY
     .requestMatchers("/api/cart/**").hasRole("USER")
