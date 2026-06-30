@@ -29,8 +29,14 @@ public class PublicMigrationController {
 
         for (Product p : products) {
             String img = p.getImageUrl();
-            if (img != null && !img.trim().isEmpty() && !img.startsWith("http")) {
-                java.io.File localFile = new java.io.File("C:/uploads/" + img);
+            if (img != null && !img.trim().isEmpty() && (img.contains("localhost") || !img.startsWith("http"))) {
+                // Extract just the filename if it's a localhost URL
+                String fileName = img;
+                if (img.contains("/uploads/")) {
+                    fileName = img.substring(img.lastIndexOf("/") + 1);
+                }
+                
+                java.io.File localFile = new java.io.File("C:/uploads/" + fileName);
                 if (localFile.exists()) {
                     try {
                         String newUrl = cloudinaryService.uploadImage(localFile);
