@@ -6,9 +6,9 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_DATASOURCE_URL
-        sync: false
+        value: jdbc:mysql://gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com:4000/test?useSSL=true&requireSSL=true&serverTimezone=UTC&enabledTLSProtocols=TLSv1.2%2CTLSv1.3
       - key: SPRING_DATASOURCE_USERNAME
-        sync: false
+        value: vtrafEN2VhaXmbn.root
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
       - key: RAZORPAY_KEY_ID
